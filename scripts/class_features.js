@@ -6,3 +6,7 @@ Hooks.once("init", () => {
 Hooks.once("init", () => {
   CONFIG.DND5E.featureTypes.class.subtypes.jujuhex = "Jujuhex";
 });
+// Adds a new "Archeology Site" class feature type
+Hooks.once("init", () => {
+  CONFIG.DND5E.featureTypes.class.subtypes.archeologySite = "Archeology Site";
+});
