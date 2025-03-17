@@ -111,6 +111,9 @@
       "folders": []
     }
   ],
+  "url": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/",
+  "manifest": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/releases/latest/download/module.json",
+  "download": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/releases/download/1.1.2/module.zip",
   "flags": {
     "hotReload": false,
     "dnd5e": {
