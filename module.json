@@ -1,135 +1,135 @@
 {
-  "id": "falcrests-machinations-of-madness",
-  "title": "Falcrest's Machinations of Madness",
-  "version": "1.1.3",
-  "esmodules": [
-    "scripts/class_features.js"
-  ],
-  "compatibility": {
-    "minimum": "12",
-    "verified": "12"
-  },
-  "relationships": {
-    "systems": [
-      {
-        "id": "dnd5e",
-        "type": "system",
-        "compatibility": {
-          "minimum": "4.0.1"
-        }
-      }
+    "id": "falcrests-machinations-of-madness",
+    "title": "Falcrest's Machinations of Madness",
+    "version": "1.1.4",
+    "esmodules": [
+        "scripts/class_features.js"
     ],
-    "requires": [
-      {
-        "id": "dnd-players-handbook",
-        "type": "module",
-        "compatibility": {}
-      }
+    "compatibility": {
+        "minimum": "12",
+        "verified": "12"
+    },
+    "relationships": {
+        "systems": [
+            {
+                "id": "dnd5e",
+                "type": "system",
+                "compatibility": {
+                    "minimum": "4.0.1"
+                }
+            }
+        ],
+        "requires": [
+            {
+                "id": "dnd-players-handbook",
+                "type": "module",
+                "compatibility": {}
+            }
+        ]
+    },
+    "packs": [
+        {
+            "name": "fmom-actors",
+            "label": "Actors",
+            "path": "packs/fmom-actors",
+            "type": "Actor",
+            "system": "dnd5e",
+            "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+            }
+        },
+        {
+            "name": "fmom-classes",
+            "label": "Classes",
+            "path": "packs/fmom-classes",
+            "type": "Item",
+            "system": "dnd5e",
+            "ownership": {
+                "PLAYER": "NONE",
+                "ASSISTANT": "OWNER"
+            }
+        },
+        {
+            "name": "fmom-tables",
+            "label": "Tables",
+            "path": "packs/fmom-tables",
+            "type": "RollTable",
+            "system": "dnd5e",
+            "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+            }
+        },
+        {
+            "name": "fmom-equipment",
+            "label": "Equipment",
+            "path": "packs/fmom-equipment",
+            "type": "Item",
+            "system": "dnd5e",
+            "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+            }
+        },
+        {
+            "name": "fmom-spells",
+            "label": "Spells",
+            "path": "packs/fmom-spells",
+            "type": "Item",
+            "system": "dnd5e",
+            "ownership": {
+                "PLAYER": "NONE",
+                "ASSISTANT": "OWNER"
+            }
+        },
+        {
+            "name": "fmom-content",
+            "label": "Falcrest's Machinations of Madness",
+            "path": "packs/fmom-content",
+            "type": "JournalEntry",
+            "system": "dnd5e",
+            "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+            }
+        }
+    ],
+    "packFolders": [
+        {
+            "name": "Falcrest's Machinations of Madness",
+            "color": "#5bdfb8",
+            "sorting": "m",
+            "packs": [
+                "fmom-content",
+                "fmom-actors",
+                "fmom-classes",
+                "fmom-tables",
+                "fmom-equipment",
+                "fmom-spells"
+            ],
+            "folders": []
+        }
+    ],
+    "url": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/",
+    "manifest": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/releases/latest/download/module.json",
+    "download": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/releases/download/1.1.4/module.zip",
+    "flags": {
+        "hotReload": false,
+        "dnd5e": {
+            "sourceBooks": {
+                "FMoM": "Falcrest's Machinations of Madness"
+            },
+            "spellLists": [
+                "Compendium.falcrests-machinations-of-madness.fmom-content.JournalEntry.tJ4PToDtCr25k48D.JournalEntryPage.EMeUdUOlPzhFPoo2"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "Ellie Fulterer",
+            "discord": "silverrzz",
+            "flags": {}
+        }
     ]
-  },
-  "packs": [
-    {
-      "name": "fmom-actors",
-      "label": "Actors",
-      "path": "packs/fmom-actors",
-      "type": "Actor",
-      "system": "dnd5e",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
-    },
-    {
-      "name": "fmom-classes",
-      "label": "Classes",
-      "path": "packs/fmom-classes",
-      "type": "Item",
-      "system": "dnd5e",
-      "ownership": {
-        "PLAYER": "NONE",
-        "ASSISTANT": "OWNER"
-      }
-    },
-    {
-      "name": "fmom-tables",
-      "label": "Tables",
-      "path": "packs/fmom-tables",
-      "type": "RollTable",
-      "system": "dnd5e",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
-    },
-    {
-      "name": "fmom-equipment",
-      "label": "Equipment",
-      "path": "packs/fmom-equipment",
-      "type": "Item",
-      "system": "dnd5e",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
-    },
-    {
-      "name": "fmom-spells",
-      "label": "Spells",
-      "path": "packs/fmom-spells",
-      "type": "Item",
-      "system": "dnd5e",
-      "ownership": {
-        "PLAYER": "NONE",
-        "ASSISTANT": "OWNER"
-      }
-    },
-    {
-      "name": "fmom-content",
-      "label": "Falcrest's Machinations of Madness",
-      "path": "packs/fmom-content",
-      "type": "JournalEntry",
-      "system": "dnd5e",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
-    }
-  ],
-  "packFolders": [
-    {
-      "name": "Falcrest's Machinations of Madness",
-      "color": "#5bdfb8",
-      "sorting": "m",
-      "packs": [
-        "fmom-content",
-        "fmom-actors",
-        "fmom-classes",
-        "fmom-tables",
-        "fmom-equipment",
-        "fmom-spells"
-      ],
-      "folders": []
-    }
-  ],
-  "url": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/",
-  "manifest": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/releases/latest/download/module.json",
-  "download": "https://github.com/Silverrzz/Falcrests-Machinations-of-Madness/releases/download/1.1.3/module.zip",
-  "flags": {
-    "hotReload": false,
-    "dnd5e": {
-      "sourceBooks": {
-        "FMoM": "Falcrest's Machinations of Madness"
-      },
-      "spellLists": [
-        "Compendium.falcrests-machinations-of-madness.fmom-content.JournalEntry.tJ4PToDtCr25k48D.JournalEntryPage.EMeUdUOlPzhFPoo2"
-      ]
-    }
-  },
-  "authors": [
-    {
-      "name": "Ellie Fulterer",
-      "discord": "silverrzz",
-      "flags": {}
-    }
-  ]
 }
