@@ -1,3 +1,7 @@
-2025/03/17-23:02:30.599 8b20 Recovering log #83
-2025/03/17-23:02:30.602 8b20 Delete type=0 #83
-2025/03/17-23:02:30.602 8b20 Delete type=3 #82
+2025/03/17-23:23:58.064 8b20 Recovering log #87
+2025/03/17-23:23:58.067 8b20 Delete type=0 #87
+2025/03/17-23:23:58.067 8b20 Delete type=3 #86
+2025/03/18-00:10:15.790 90a4 Level-0 table #91: started
+2025/03/18-00:10:15.790 90a4 Level-0 table #91: 0 bytes OK
+2025/03/18-00:10:15.791 90a4 Delete type=0 #89
+2025/03/18-00:10:15.793 90a4 Manual compaction at level-0 from '!actors!iTZ6525rtH7sH79m' @ 72057594037927935 : 1 .. '!actors.items!iTZ6525rtH7sH79m.FRzfpBeLUXgVHfSI' @ 0 : 0; will stop at (end)

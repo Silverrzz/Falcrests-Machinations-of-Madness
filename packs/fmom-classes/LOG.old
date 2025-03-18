@@ -1,14 +1,18 @@
-2025/03/17-23:02:30.605 7e58 Recovering log #90
-2025/03/17-23:02:30.605 7e58 Level-0 table #92: started
-2025/03/17-23:02:30.612 7e58 Level-0 table #92: 1950 bytes OK
-2025/03/17-23:02:30.616 7e58 Delete type=0 #90
-2025/03/17-23:02:30.616 7e58 Delete type=3 #88
-2025/03/17-23:02:30.616 596c Compacting 4@0 + 1@1 files
-2025/03/17-23:02:30.620 596c Generated table #94@0: 147 keys, 119588 bytes
-2025/03/17-23:02:30.620 596c Compacted 4@0 + 1@1 files => 119588 bytes
-2025/03/17-23:02:30.621 596c compacted to: files[ 0 1 0 0 0 0 0 ]
-2025/03/17-23:02:30.621 596c Delete type=2 #69
-2025/03/17-23:02:30.621 596c Delete type=2 #81
-2025/03/17-23:02:30.621 596c Delete type=2 #86
-2025/03/17-23:02:30.621 596c Delete type=2 #89
-2025/03/17-23:02:30.621 596c Delete type=2 #92
+2025/03/17-23:23:58.069 8d00 Recovering log #97
+2025/03/17-23:23:58.069 8d00 Level-0 table #99: started
+2025/03/17-23:23:58.077 8d00 Level-0 table #99: 2135 bytes OK
+2025/03/17-23:23:58.080 8d00 Delete type=0 #97
+2025/03/17-23:23:58.080 8d00 Delete type=3 #95
+2025/03/18-00:10:15.794 90a4 Level-0 table #102: started
+2025/03/18-00:10:15.796 90a4 Level-0 table #102: 19776 bytes OK
+2025/03/18-00:10:15.797 90a4 Delete type=0 #100
+2025/03/18-00:10:15.808 90a4 Manual compaction at level-0 from '!folders!2Ri4bLwjyGJeN6AZ' @ 72057594037927935 : 1 .. '!items.effects!zj97mjXdq4m3g2wJ.7I94oKIy4IKmeyGA' @ 0 : 0; will stop at '!items!yxJ12DpWslFn12bV' @ 561 : 1
+2025/03/18-00:10:15.808 90a4 Compacting 3@0 + 1@1 files
+2025/03/18-00:10:15.811 90a4 Generated table #103@0: 154 keys, 122953 bytes
+2025/03/18-00:10:15.811 90a4 Compacted 3@0 + 1@1 files => 122953 bytes
+2025/03/18-00:10:15.811 90a4 compacted to: files[ 0 1 0 0 0 0 0 ]
+2025/03/18-00:10:15.812 90a4 Delete type=2 #94
+2025/03/18-00:10:15.812 90a4 Delete type=2 #96
+2025/03/18-00:10:15.812 90a4 Delete type=2 #99
+2025/03/18-00:10:15.812 90a4 Delete type=2 #102
+2025/03/18-00:10:15.812 90a4 Manual compaction at level-0 from '!items!yxJ12DpWslFn12bV' @ 561 : 1 .. '!items.effects!zj97mjXdq4m3g2wJ.7I94oKIy4IKmeyGA' @ 0 : 0; will stop at (end)
