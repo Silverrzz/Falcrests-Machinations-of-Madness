@@ -10,3 +10,7 @@ Hooks.once("init", () => {
 Hooks.once("init", () => {
   CONFIG.DND5E.featureTypes.class.subtypes.archeologySite = "Archeology Site";
 });
+// Adds a new "Magical Manipulation" class feature type
+Hooks.once("init", () => {
+  CONFIG.DND5E.featureTypes.class.subtypes.magicalManipulation = "Magical Manipulation";
+});
