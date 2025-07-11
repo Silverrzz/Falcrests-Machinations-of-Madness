@@ -1,3 +1,9 @@
-2025/06/06-13:45:13.460 4bc4 Recovering log #179
-2025/06/06-13:45:13.462 4bc4 Delete type=0 #179
-2025/06/06-13:45:13.462 4bc4 Delete type=3 #177
+2025/07/11-00:29:10.095 8768 Recovering log #182
+2025/07/11-00:29:10.095 8768 Level-0 table #184: started
+2025/07/11-00:29:10.100 8768 Level-0 table #184: 182447 bytes OK
+2025/07/11-00:29:10.102 8768 Delete type=0 #182
+2025/07/11-00:29:10.102 8768 Delete type=3 #181
+2025/07/11-01:34:27.442 41dc Compacting 1@0 + 1@1 files
+2025/07/11-01:34:27.445 41dc Generated table #186@0: 196 keys, 161337 bytes
+2025/07/11-01:34:27.445 41dc Compacted 1@0 + 1@1 files => 161337 bytes
+2025/07/11-01:34:27.446 41dc compacted to: files[ 0 1 0 0 0 0 0 ]
