@@ -5,7 +5,6 @@ Hooks.once("init", () => {
         12: "12th Level",
         13: "13th Level",
         14: "14th Level",
-        15: "15th Level",
-        16: "16th Level"
+        15: "15th Level"
     });
 });
