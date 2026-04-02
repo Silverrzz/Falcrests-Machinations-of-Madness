@@ -14,3 +14,7 @@ Hooks.once("init", () => {
 Hooks.once("init", () => {
   CONFIG.DND5E.featureTypes.class.subtypes.magicalManipulation = "Magical Manipulation";
 });
+// Adds a new "Sacred Tobacco Blend" class feature type
+Hooks.once("init", () => {
+  CONFIG.DND5E.featureTypes.class.subtypes.sacredTobaccoBlend = "Sacred Tobacco Blend";
+});
