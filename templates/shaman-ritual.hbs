@@ -1,0 +1,218 @@
+<div class="fmom-sr">
+  <div class="fmom-sr__bg" aria-hidden="true">
+    <div class="fmom-sr__mist"></div>
+    <div class="fmom-sr__grain"></div>
+  </div>
+
+  <header class="fmom-sr__header">
+    <div class="fmom-sr__header-main">
+      <div class="fmom-sr__sigil" aria-hidden="true">
+        <i class="fa-solid fa-moon"></i>
+      </div>
+      <div class="fmom-sr__titles">
+        <h1 class="fmom-sr__title">{{title}}</h1>
+        {{#if subtitle}}
+        <p class="fmom-sr__subtitle">{{subtitle}}</p>
+        {{/if}}
+      </div>
+    </div>
+
+    {{#if showProgress}}
+    <nav class="fmom-sr__progress" aria-label="Ritual progress">
+      {{#each progressSteps}}
+      <div class="fmom-sr__step fmom-sr__step--{{state}}" data-step-id="{{id}}">
+        <span class="fmom-sr__step-dot"></span>
+        <span class="fmom-sr__step-label">{{label}}</span>
+      </div>
+      {{/each}}
+    </nav>
+    {{/if}}
+  </header>
+
+  <div class="fmom-sr__body">
+    {{#if stepChoose}}
+    <section class="fmom-sr__panel" aria-label="Choose spirits">
+      <div class="fmom-sr__panel-edge" aria-hidden="true"></div>
+      <h2 class="fmom-sr__panel-title">The willing</h2>
+      <p class="fmom-sr__lead">
+        Name <strong class="fmom-sr__accent">{{guaranteed}}</strong> spirit(s) who answer before the dice fall - <em>Enhanced Communication</em>.
+      </p>
+      {{#if showDebugToggle}}
+      <div class="fmom-sr__debug-bar fmom-sr__debug-bar--top">
+        <label class="fmom-sr__debug-label">
+          <input type="checkbox" class="fmom-sr__debug-cb" {{#if debugManual}}checked{{/if}} />
+          <span>Debug: skip table rolls, pick communion &amp; attunement</span>
+        </label>
+      </div>
+      {{/if}}
+      <div class="fmom-sr__chip-grid" role="group">
+        {{#each spirits}}
+        <button type="button" class="fmom-sr__chip{{#if selected}} is-selected{{/if}}{{#if disabled}} is-disabled{{/if}}"
+          data-action="toggleSpirit" data-spirit-id="{{id}}" {{#if disabled}}disabled{{/if}}>
+          <span class="fmom-sr__chip-glow" aria-hidden="true"></span>
+          <span class="fmom-sr__chip-label">{{label}}</span>
+        </button>
+        {{/each}}
+      </div>
+      <div class="fmom-sr__counter">
+        <span class="fmom-sr__counter-track">
+          <span class="fmom-sr__counter-fill" style="--fmom-sr-count-pct: {{counterPct}}%;"></span>
+        </span>
+        <span class="fmom-sr__counter-text"><strong>{{selectedCount}}</strong> / {{guaranteed}} chosen</span>
+      </div>
+      <footer class="fmom-sr__footer">
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary" data-action="confirmChoose"
+          {{#unless chooseValid}}disabled{{/unless}}>
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          Continue to communion
+        </button>
+      </footer>
+    </section>
+    {{/if}}
+
+    {{#if stepRoll}}
+    <section class="fmom-sr__panel" aria-label="Roll for spirits">
+      <div class="fmom-sr__panel-edge" aria-hidden="true"></div>
+      <h2 class="fmom-sr__panel-title">Across the veil</h2>
+      {{#if showDebugToggle}}
+      <div class="fmom-sr__debug-bar">
+        <label class="fmom-sr__debug-label">
+          <input type="checkbox" class="fmom-sr__debug-cb" {{#if debugManual}}checked{{/if}} />
+          <span>Debug: skip table rolls, pick communion &amp; attunement</span>
+        </label>
+      </div>
+      {{/if}}
+      <p class="fmom-sr__lead">
+        {{#if showDebugRollUi}}
+        Debug mode: choose <strong class="fmom-sr__accent">{{rollCount}}</strong> spirit(s) from the veil (each must differ from your chosen spirits and from each other). No chat rolls.
+        {{else}}
+        Cast on the Communication table <strong class="fmom-sr__accent">{{rollCount}}</strong> time(s). Echoes repeat until each name is unique - even against your chosen spirits.
+        {{/if}}
+      </p>
+      {{#if showDebugRollUi}}
+      <div class="fmom-sr__debug-rolls" role="group" aria-label="Manual communion results">
+        {{#each debugRollSlots}}
+        <div class="fmom-sr__debug-roll-row">
+          <span class="fmom-sr__debug-roll-label">Communion {{slotNumber}}</span>
+          <select class="fmom-sr__debug-roll-select" data-slot="{{slotIndex}}" aria-label="Spirit for communion {{slotNumber}}">
+            <option value="">- Spirit -</option>
+            {{#each options}}
+            <option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+      {{#if guaranteedLabels.length}}
+      <div class="fmom-sr__chosen">
+        <span class="fmom-sr__chosen-label">Already called</span>
+        <div class="fmom-sr__chosen-tags">
+          {{#each guaranteedLabels}}
+          <span class="fmom-sr__tag">{{this}}</span>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+      {{#if rolledLabels.length}}
+      <ul class="fmom-sr__results">
+        {{#each rolledLabels}}
+        <li><span class="fmom-sr__results-mark" aria-hidden="true"></span>{{this}}</li>
+        {{/each}}
+      </ul>
+      {{else}}
+      <p class="fmom-sr__muted">The spirits have not yet whispered from the table.</p>
+      {{/if}}
+      <footer class="fmom-sr__footer">
+        {{#unless rollsDone}}
+        {{#if showDebugRollUi}}
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary fmom-sr__btn--wide" data-action="confirmDebugRolls">
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          Continue (skip table rolls)
+        </button>
+        {{else}}
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary fmom-sr__btn--wide" data-action="rollSpirits">
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+          Roll the communion
+        </button>
+        {{/if}}
+        {{else}}
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary" data-action="nextAfterRoll">
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          Continue
+        </button>
+        {{/unless}}
+      </footer>
+    </section>
+    {{/if}}
+
+    {{#if stepAttune}}
+    <section class="fmom-sr__panel" aria-label="Attunement">
+      <div class="fmom-sr__panel-edge fmom-sr__panel-edge--ember" aria-hidden="true"></div>
+      <h2 class="fmom-sr__panel-title">Mood of the host</h2>
+      {{#if showDebugToggle}}
+      <div class="fmom-sr__debug-bar">
+        <label class="fmom-sr__debug-label">
+          <input type="checkbox" class="fmom-sr__debug-cb" {{#if debugManual}}checked{{/if}} />
+          <span>Debug: skip table rolls, pick communion &amp; attunement</span>
+        </label>
+      </div>
+      {{/if}}
+      <p class="fmom-sr__lead">
+        {{#if showDebugAttuneUi}}
+        Debug mode: pick attunement (d4 bracket) with no table roll.
+        {{else}}
+        Cast on the Attunement table, let the spirits show whether they are peaceful, fierce, wild, or heavy-hearted.
+        {{/if}}
+      </p>
+      {{#if showDebugAttuneUi}}
+      <div class="fmom-sr__debug-attune" role="group" aria-label="Manual attunement">
+        {{#each debugAttuneMoods}}
+        <button type="button" class="fmom-sr__debug-attune-btn" data-action="pickDebugAttunement" data-mood-id="{{id}}">
+          <span class="fmom-sr__debug-attune-d4">d4 {{d4}}</span>
+          <span class="fmom-sr__debug-attune-name">{{label}}</span>
+        </button>
+        {{/each}}
+      </div>
+      {{/if}}
+      {{#if attuneSummary}}
+      <div class="fmom-sr__attune-scroll">
+        <div class="fmom-sr__attune">{{{attuneSummary}}}</div>
+      </div>
+      {{/if}}
+      <footer class="fmom-sr__footer{{#if hideAttuneFooter}} fmom-sr__footer--hidden{{/if}}">
+        {{#unless attuneDone}}
+        {{#unless showDebugAttuneUi}}
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary fmom-sr__btn--wide" data-action="rollAttunement">
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          <i class="fa-solid fa-dice-d4" aria-hidden="true"></i>
+          Roll attunement
+        </button>
+        {{/unless}}
+        {{else}}
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary fmom-sr__btn--seal" data-action="finishRitual">
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          Seal &amp; grant spells
+        </button>
+        {{/unless}}
+      </footer>
+    </section>
+    {{/if}}
+
+    {{#if stepDone}}
+    <section class="fmom-sr__panel fmom-sr__panel--done" aria-label="Complete">
+      <div class="fmom-sr__panel-edge fmom-sr__panel-edge--gold" aria-hidden="true"></div>
+      <div class="fmom-sr__done-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div>
+      <h2 class="fmom-sr__panel-title">The circle closes</h2>
+      <p class="fmom-sr__lead">Your spirit-touched spells rest on the sheet until the next dawn calls you back.</p>
+      <footer class="fmom-sr__footer">
+        <button type="button" class="fmom-sr__btn fmom-sr__btn--primary" data-action="closeApp">
+          <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
+          Close
+        </button>
+      </footer>
+    </section>
+    {{/if}}
+  </div>
+</div>

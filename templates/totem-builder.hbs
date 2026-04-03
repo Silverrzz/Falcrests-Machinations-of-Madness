@@ -1,0 +1,302 @@
+<section class="fmom-totem-shell">
+  <div class="fmom-totem-shell__bg" aria-hidden="true">
+    <div class="fmom-totem-shell__mist"></div>
+    <div class="fmom-totem-shell__grain"></div>
+  </div>
+
+  <div class="fmom-totem-layout">
+    <div class="fmom-totem-main">
+      <header class="fmom-totem-header">
+        <div class="fmom-totem-top-card">
+          <div class="fmom-totem-budget">
+            <div class="fmom-budget-ring" style="--fmom-fill: {{budgetFillPercent}};">
+              <svg class="fmom-budget-svg" viewBox="0 0 36 36" aria-hidden="true">
+                <circle class="fmom-budget-track" cx="18" cy="18" r="15.5" fill="none" />
+                <circle class="fmom-budget-fill" cx="18" cy="18" r="15.5" fill="none" />
+              </svg>
+              <span class="fmom-budget-num">{{sectionsUsed}}</span>
+            </div>
+            <div class="fmom-budget-body">
+              <span class="fmom-budget-kicker">Totem Builder{{#if showDualTotemTabs}} · {{#if tab0active}}editing A{{else}}editing B{{/if}}{{/if}}</span>
+              <div class="fmom-budget-stat">
+                <span class="fmom-budget-value"><span class="fmom-budget-used">{{sectionsUsed}}</span><span class="fmom-budget-sep">/</span><span class="fmom-budget-cap">{{budget}}</span></span>
+                <span class="fmom-budget-unit">sections (this pole)</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="fmom-clear-infusions"
+              data-action="clearInfusions"
+              {{#unless sectionsUsed}}disabled{{/unless}}
+              title="Clear all infusion choices for this pole"
+              aria-label="Clear infusions"
+            >
+              <i class="fa-solid fa-eraser" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        {{#unless budgetValid}}
+        <p class="fmom-totem-warn notification warning">No section budget found. Use <code>@scale…</code> in the Totem Pole text, <code>Sections allowed: N</code>, or a module default.</p>
+        {{/unless}}
+      </header>
+
+      {{#if showDualTotemTabs}}
+      <div class="fmom-totem-tabs" role="tablist" aria-label="Which totem pole to edit">
+        <button type="button" class="fmom-totem-tab fmom-totem-tab--a{{#if tab0active}} is-active{{/if}}" data-action="selectTotemTab" data-tab="0" role="tab" aria-selected="{{#if tab0active}}true{{else}}false{{/if}}">
+          <span class="fmom-totem-tab__badge">A</span>
+          <span class="fmom-totem-tab__body">
+            <span class="fmom-totem-tab__title">Totem A</span>
+            <span class="fmom-totem-tab__sub">Place first on the map</span>
+          </span>
+        </button>
+        <button type="button" class="fmom-totem-tab fmom-totem-tab--b{{#if tab1active}} is-active{{/if}}" data-action="selectTotemTab" data-tab="1" role="tab" aria-selected="{{#if tab1active}}true{{else}}false{{/if}}">
+          <span class="fmom-totem-tab__badge">B</span>
+          <span class="fmom-totem-tab__body">
+            <span class="fmom-totem-tab__title">Totem B</span>
+            <span class="fmom-totem-tab__sub">Separate loadout · place second</span>
+          </span>
+        </button>
+      </div>
+      {{/if}}
+
+      <div class="fmom-totem-scroll">
+        <fieldset class="fmom-infusion-fieldset">
+          {{#if infusionCatalogNonEmpty}}
+          <div class="fmom-infusion-filter-row">
+            <input
+              id="fmom-infusion-filter-input"
+              type="search"
+              class="fmom-infusion-filter"
+              placeholder="Search infusions…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          {{/if}}
+          {{#if infusionFilterHasNoMatches}}
+          <p class="fmom-infusion-filter-empty notes">No infusions match that search.</p>
+          {{else}}
+          {{#if infusionCatalogNonEmpty}}
+          <ul class="fmom-infusion-list">
+            {{#each infusions}}
+            <li class="fmom-infusion-row{{#unless valid}} is-invalid{{/unless}}{{#if showElementSlots}} fmom-row-elements{{/if}}" data-item-id="{{id}}">
+              <div class="fmom-infusion-icon" aria-hidden="true">
+                <img src="{{img}}" alt="" loading="lazy" />
+              </div>
+              <div class="fmom-infusion-main">
+                <div class="fmom-infusion-title-row">
+                  <span class="fmom-infusion-name">{{name}}</span>
+                </div>
+                {{#if showElementSlots}}
+                <div class="fmom-element-row" role="group" aria-label="Damage type for each Elements copy">
+                  <span class="fmom-element-row__label" id="fmom-el-label-{{rowIndex}}">Elements - damage per copy</span>
+                  <div class="fmom-element-slots" aria-describedby="fmom-el-label-{{rowIndex}}">
+                    {{#each elementSlots}}
+                    <div class="fmom-el-slot" title="Copy {{n}}">
+                      <label class="fmom-el-slot__lbl" for="fmom-el-{{../rowIndex}}-{{index}}"><span class="fmom-el-slot__copy">Copy</span><span class="fmom-el-slot__n">{{n}}</span></label>
+                      <select
+                        id="fmom-el-{{../rowIndex}}-{{index}}"
+                        class="fmom-el-slot-select"
+                        data-item-id="{{../id}}"
+                        data-slot-index="{{index}}"
+                        data-build-index="{{../buildIndex}}"
+                        aria-label="Damage type for Elements copy {{n}}"
+                      >
+                        {{#each options}}
+                        <option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                        {{/each}}
+                      </select>
+                    </div>
+                    {{/each}}
+                  </div>
+                </div>
+                {{/if}}
+                <div class="fmom-infusion-meta">
+                  <span class="fmom-tag fmom-tag-cost">{{sections}} {{sectionsWord}} each</span>
+                  <span class="fmom-tag {{#if repeatable}}fmom-tag-repeat{{else}}fmom-tag-once{{/if}}">{{#if repeatable}}Repeatable{{else}}Once only{{/if}}</span>
+                </div>
+                {{#unless valid}}
+                <p class="fmom-infusion-error">Could not parse UUID / sections / repeatable from this item’s description.</p>
+                {{/unless}}
+              </div>
+              <div class="fmom-infusion-stepper" role="group" aria-label="Quantity for {{name}}">
+                <button type="button" class="fmom-step" data-action="decInfusion" data-item-id="{{id}}" {{#unless canDec}}disabled{{/unless}} title="Remove one" aria-label="Remove one">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <span class="fmom-step-count">{{count}}</span>
+                <button type="button" class="fmom-step" data-action="incInfusion" data-item-id="{{id}}" {{#unless canInc}}disabled{{/unless}} title="Add one" aria-label="Add one">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </li>
+            {{/each}}
+          </ul>
+          {{else}}
+          <p class="fmom-totem-empty notes">No Haida Infusion feats named “Infusion of …” were found on this character.</p>
+          {{/if}}
+          {{/if}}
+        </fieldset>
+      </div>
+    </div>
+
+    <aside class="fmom-totem-preview" aria-label="Totem preview and construction options">
+      <div class="fmom-totem-preview-scroll">
+        {{#if dualPreviews}}
+        <div class="fmom-dual-preview">
+          {{#each dualPreviews}}
+          <div class="fmom-preview-card fmom-preview-card--compact {{cssMod}}">
+            <div class="fmom-preview-card__head">
+              <span class="fmom-preview-card__letter" aria-hidden="true">{{letter}}</span>
+              <div class="fmom-preview-card__headtext">
+                <h2 class="fmom-preview-card__title">{{title}}</h2>
+              </div>
+            </div>
+            <p class="fmom-preview-card__summary fmom-preview-card__summary--inline">{{summaryLine}}</p>
+            {{#if chips.length}}
+            <div class="fmom-preview-chips" aria-label="Infusions">
+              {{#each chips}}
+              <span class="fmom-preview-chip">{{this}}</span>
+              {{/each}}
+            </div>
+            {{/if}}
+            {{#if tags.length}}
+            <div class="fmom-preview-tags fmom-preview-tags--inline">
+              {{#each tags}}
+              <span class="fmom-tag fmom-tag-preview fmom-tag-preview--sm">{{this}}</span>
+              {{/each}}
+            </div>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="fmom-preview-card fmom-preview-card--compact">
+          <h2 class="fmom-preview-card__title">Totem preview</h2>
+          <p class="fmom-preview-card__summary fmom-preview-card__summary--inline">{{previewSummary}}</p>
+          {{#if previewInfusionLines.length}}
+          <div class="fmom-preview-chips">
+            {{#each previewInfusionLines}}
+            <span class="fmom-preview-chip">{{this}}</span>
+            {{/each}}
+          </div>
+          {{/if}}
+          {{#if previewTags.length}}
+          <div class="fmom-preview-tags fmom-preview-tags--inline">
+            {{#each previewTags}}
+            <span class="fmom-tag fmom-tag-preview fmom-tag-preview--sm">{{this}}</span>
+            {{/each}}
+          </div>
+          {{/if}}
+          {{#if etherealExtendedRange}}
+          <p class="fmom-preview-extra fmom-preview-extra--tight"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> 120 ft placement</p>
+          {{/if}}
+          {{#if etherealBonusAction}}
+          <p class="fmom-preview-extra fmom-preview-extra--tight"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Bonus-action build</p>
+          {{/if}}
+          {{#if convergenceTwin}}
+          <p class="fmom-preview-extra fmom-preview-extra--tight"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Two poles (A then B)</p>
+          {{/if}}
+        </div>
+        {{/if}}
+
+        {{#if slotSnapshotLines.length}}
+        <div class="fmom-slot-strip fmom-slot-strip--compact" aria-label="Spell slots remaining">
+          <span class="fmom-slot-strip__label">Slots</span>
+          <div class="fmom-slot-strip__row">
+            {{#each slotSnapshotLines}}
+            <span class="fmom-slot-pip" title="{{lvl}}-level: {{remaining}} / {{max}}">
+              <span class="fmom-slot-pip__lv">{{lvl}}</span>
+              <span class="fmom-slot-pip__n">{{remaining}}</span>
+            </span>
+            {{/each}}
+          </div>
+        </div>
+        {{/if}}
+
+        {{#if hasEtherealConstruction}}
+        <div class="fmom-ethereal-panel fmom-side-panel--tight">
+          <h3 class="fmom-side-panel__title">Ethereal Construction</h3>
+          <div class="fmom-ethereal-toggles fmom-ethereal-toggles--row" role="group" aria-label="Ethereal Construction">
+            <button
+              type="button"
+              class="fmom-chip-toggle fmom-chip-toggle--compact{{#if etherealExtendedRange}} is-on{{/if}}"
+              data-action="toggleEthereal"
+              data-ethereal="range"
+              title="Construct the totem up to 120 ft away"
+            >
+              <span class="fmom-chip-toggle__icon" aria-hidden="true"><i class="fa-solid fa-ruler-combined"></i></span>
+              <span class="fmom-chip-toggle__text">
+                <span class="fmom-chip-toggle__name">120 ft</span>
+                <span class="fmom-chip-toggle__hint">Range</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="fmom-chip-toggle fmom-chip-toggle--compact{{#if etherealBonusAction}} is-on{{/if}}"
+              data-action="toggleEthereal"
+              data-ethereal="bonus"
+              title="Construct the totem using a bonus action"
+            >
+              <span class="fmom-chip-toggle__icon" aria-hidden="true"><i class="fa-solid fa-forward-fast"></i></span>
+              <span class="fmom-chip-toggle__text">
+                <span class="fmom-chip-toggle__name">Bonus</span>
+                <span class="fmom-chip-toggle__hint">Action</span>
+              </span>
+            </button>
+          </div>
+          {{#if etherealEffectCount}}
+          {{#if etherealNeedsSlots}}
+          <p class="fmom-ethereal-warn notification warning">{{etherealNoSlotsMessage}}</p>
+          {{else}}
+          <label class="fmom-ethereal-plan-label" for="fmom-ethereal-plan-select">Spell slots</label>
+          <select id="fmom-ethereal-plan-select" class="fmom-ethereal-plan" aria-label="Spell slots for Ethereal Construction">
+            {{#each etherealSlotPlanRows}}
+            <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+          {{/if}}
+          {{/if}}
+        </div>
+        {{/if}}
+
+        {{#if hasEtherealConvergence}}
+        <div class="fmom-convergence-panel fmom-side-panel--tight">
+          <h3 class="fmom-side-panel__title">Ethereal Convergence</h3>
+          {{#if convergenceHint}}
+          <p class="fmom-side-panel__lead fmom-side-panel__lead--short">{{convergenceHint}}</p>
+          {{/if}}
+          {{#if convergenceBlockedBySlotPlan}}
+          <p class="fmom-convergence-warn notification warning">Free a 5th-level slot or turn off Totem B.</p>
+          {{/if}}
+          <button
+            type="button"
+            class="fmom-convergence-toggle{{#if convergenceTwin}} is-on{{/if}}"
+            data-action="toggleConvergence"
+            {{#if convergenceDisabled}}disabled{{/if}}
+          >
+            <span class="fmom-convergence-toggle__check" aria-hidden="true"><i class="fa-solid fa-plus"></i></span>
+            <span class="fmom-convergence-toggle__label">Also build Totem B (one 5th-level slot)</span>
+          </button>
+        </div>
+        {{/if}}
+      </div>
+    </aside>
+  </div>
+
+  <footer class="fmom-totem-footer">
+    <button
+      type="submit"
+      name="submit"
+      class="fmom-submit"
+      title="Creates totem actor(s), then places token(s) on the scene."
+      {{#unless canSubmit}}disabled{{/unless}}
+    >
+      <span class="fmom-submit-shine" aria-hidden="true"></span>
+      <span class="fmom-submit-icon" aria-hidden="true"><i class="fa-solid fa-hammer"></i></span>
+      <span class="fmom-submit-text">
+        <span class="fmom-submit-title">{{#if convergenceTwin}}Create totems A &amp; B{{else}}Create totem{{/if}}</span>
+        <span class="fmom-submit-sub">{{#if convergenceTwin}}Place A, then B{{else}}Place token on the map{{/if}}</span>
+      </span>
+    </button>
+  </footer>
+</section>

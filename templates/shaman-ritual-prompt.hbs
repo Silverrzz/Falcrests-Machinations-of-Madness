@@ -1,0 +1,65 @@
+<div class="fmom-srp">
+  <div class="fmom-srp__bg" aria-hidden="true">
+    <div class="fmom-srp__mist"></div>
+    <div class="fmom-srp__ring fmom-srp__ring--outer"></div>
+    <div class="fmom-srp__ring fmom-srp__ring--inner"></div>
+  </div>
+
+  <div class="fmom-srp__main">
+    <div class="fmom-srp__moon-wrap" aria-hidden="true">
+      <div class="fmom-srp__moon">
+        <i class="fa-solid fa-moon"></i>
+      </div>
+      <div class="fmom-srp__moon-glow"></div>
+    </div>
+
+    <p class="fmom-srp__kicker">Long rest complete</p>
+    <h1 class="fmom-srp__title">Communication Ritual</h1>
+
+    <div class="fmom-srp__actor">
+      {{#if actorImg}}
+      <img class="fmom-srp__portrait" src="{{actorImg}}" alt="" loading="lazy" />
+      {{else}}
+      <div class="fmom-srp__portrait fmom-srp__portrait--placeholder" aria-hidden="true">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      {{/if}}
+      <div class="fmom-srp__actor-text">
+        <span class="fmom-srp__actor-label">Spirit-touched</span>
+        <span class="fmom-srp__actor-name">{{actorName}}</span>
+      </div>
+    </div>
+
+    <div class="fmom-srp__card">
+      <p class="fmom-srp__lead">
+        The veil thins at dawn. Walk the ritual to refresh your connection with the spirits.
+      </p>
+      <ul class="fmom-srp__bullets">
+        <li>Clears your prior spells</li>
+        <li>Clears your attunement gifts</li>
+        <li>Prepares your new spirit-granted spells</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="fmom-srp__actions">
+    <button type="button" class="fmom-srp__btn fmom-srp__btn--ghost" data-action="skipRitual">
+      <span class="fmom-srp__btn-inner">
+        <span class="fmom-srp__btn-icon" aria-hidden="true"><i class="fa-solid fa-forward"></i></span>
+        <span class="fmom-srp__btn-text">
+          <span class="fmom-srp__btn-title">Not this dawn</span>
+          <span class="fmom-srp__btn-hint">Skip the ritual</span>
+        </span>
+      </span>
+    </button>
+    <button type="button" class="fmom-srp__btn fmom-srp__btn--primary" data-action="runRitual">
+      <span class="fmom-srp__btn-inner">
+        <span class="fmom-srp__btn-icon" aria-hidden="true"><i class="fa-solid fa-fire-flame-curved"></i></span>
+        <span class="fmom-srp__btn-text">
+          <span class="fmom-srp__btn-title">Begin the ritual</span>
+          <span class="fmom-srp__btn-hint">Open the spirit circle</span>
+        </span>
+      </span>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,1557 @@
+/* =============================================================================
+   FMoM - Totem builder (“carver’s lodge” theme)
+   Cedar / amber / copper palette; mist, grain, carved-panel chrome - UX unchanged
+   ============================================================================= */
+
+#fmom-totem-builder.application .window-header {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #2a1f18 92%, #d4a853 8%) 0%,
+    color-mix(in srgb, #16100c 95%, #c9a227 5%) 100%
+  );
+  border-bottom: 1px solid color-mix(in srgb, #d4a853 22%, #3d2e22 78%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 6%, transparent) inset;
+}
+
+#fmom-totem-builder.application .window-title {
+  font-family: Georgia, "Palatino Linotype", Palatino, serif;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+#fmom-totem-builder.application {
+  --fmom-tb-ember: #d4a853;
+  --fmom-tb-ember-deep: #9a7028;
+  --fmom-tb-copper: #b87333;
+  --fmom-tb-copper-glow: color-mix(in srgb, var(--fmom-tb-copper) 45%, transparent);
+  --fmom-tb-spirit: #5bdfb8;
+  --fmom-tb-spirit-dim: color-mix(in srgb, var(--fmom-tb-spirit) 35%, transparent);
+  --fmom-tb-night: #0f0c0a;
+  --fmom-tb-bark: #1e1612;
+  --fmom-tb-wood: #2a211a;
+  --fmom-tb-wood-mid: #352a20;
+  --fmom-tb-mist: rgba(220, 190, 150, 0.07);
+  --fmom-tb-parchment: #ebe6dc;
+  --fmom-tb-line: color-mix(in srgb, var(--fmom-tb-ember) 28%, #4a3a2c 72%);
+  --fmom-tb-font-display: Georgia, "Palatino Linotype", Palatino, "Times New Roman", serif;
+  --fmom-tb-font-ui: var(--font-primary, "Signika", "Segoe UI", system-ui, sans-serif);
+
+  min-height: 320px;
+}
+
+#fmom-totem-builder .window-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0.65rem 1.1rem 0.9rem;
+  box-sizing: border-box;
+  min-height: 0;
+  flex: 1;
+  background: transparent;
+}
+
+#fmom-totem-builder form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* --- Shell + atmosphere --------------------------------------------------- */
+
+.fmom-totem-shell {
+  --fmom-accent: var(--fmom-tb-ember);
+  --fmom-accent-dim: color-mix(in srgb, var(--fmom-tb-ember) 50%, transparent);
+  --fmom-surface: color-mix(in srgb, var(--fmom-tb-wood) 90%, var(--fmom-tb-ember) 10%);
+  --fmom-row: color-mix(in srgb, var(--fmom-tb-bark) 88%, var(--fmom-tb-wood-mid) 12%);
+  --fmom-row-border: color-mix(in srgb, var(--fmom-tb-line) 70%, transparent);
+  --fmom-infusion-inset-x: 0.65rem;
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0.65rem;
+  padding: 0;
+  font-family: var(--fmom-tb-font-ui);
+  color: var(--fmom-tb-parchment);
+}
+
+.fmom-totem-shell__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 100% 50% at 50% 0%, color-mix(in srgb, var(--fmom-tb-ember) 14%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 45% at 100% 80%, color-mix(in srgb, var(--fmom-tb-copper) 12%, transparent) 0%, transparent 45%),
+    radial-gradient(ellipse 55% 40% at 0% 90%, color-mix(in srgb, var(--fmom-tb-spirit) 8%, transparent) 0%, transparent 42%),
+    linear-gradient(168deg, #120e0b 0%, var(--fmom-tb-night) 42%, #0a0806 100%);
+}
+
+.fmom-totem-shell__mist {
+  position: absolute;
+  inset: -15%;
+  opacity: 0.4;
+  background:
+    radial-gradient(ellipse 38% 24% at 25% 55%, var(--fmom-tb-mist) 0%, transparent 52%),
+    radial-gradient(ellipse 32% 20% at 78% 38%, var(--fmom-tb-mist) 0%, transparent 48%);
+  animation: fmom-tb-mist 16s ease-in-out infinite alternate;
+}
+
+@keyframes fmom-tb-mist {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.32; }
+  100% { transform: translate(-2%, 1%) scale(1.04); opacity: 0.46; }
+}
+
+.fmom-totem-shell__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.fmom-totem-header,
+.fmom-totem-scroll,
+.fmom-totem-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Header / budget ------------------------------------------------------ */
+
+.fmom-totem-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.fmom-totem-top-card {
+  flex: 0 0 auto;
+}
+
+.fmom-clear-infusions {
+  flex: 0 0 auto;
+  align-self: center;
+  justify-self: end;
+  margin: 0;
+  width: 2.65rem;
+  height: 2.65rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 88%, transparent);
+  cursor: pointer;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 55%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 88%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.fmom-clear-infusions:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--fmom-tb-ember) 42%, var(--fmom-tb-line) 58%);
+  color: var(--fmom-tb-parchment);
+  background: color-mix(in srgb, var(--fmom-tb-ember) 12%, var(--fmom-tb-bark) 88%);
+}
+
+.fmom-clear-infusions:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fmom-totem-budget {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem 0.85rem;
+  padding: 0.75rem 1rem 0.8rem;
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--fmom-tb-wood) 88%, var(--fmom-tb-ember) 12%) 0%,
+    color-mix(in srgb, var(--fmom-tb-bark) 92%, var(--fmom-tb-spirit) 8%) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 58%, transparent);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 color-mix(in srgb, white 6%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.fmom-totem-budget::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14%;
+  bottom: 14%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, transparent, var(--fmom-tb-ember) 48%, transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.fmom-budget-ring {
+  --fmom-circ: 97.39;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  align-self: center;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--fmom-tb-ember) 25%, transparent));
+}
+
+.fmom-budget-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.fmom-budget-track {
+  stroke: color-mix(in srgb, var(--fmom-tb-parchment) 18%, transparent);
+  stroke-width: 3;
+}
+
+.fmom-budget-fill {
+  stroke: var(--fmom-tb-ember);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: var(--fmom-circ);
+  stroke-dashoffset: calc(var(--fmom-circ) * (1 - var(--fmom-fill, 0) / 100));
+  transition: stroke-dashoffset 0.3s ease;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--fmom-tb-ember) 40%, transparent));
+}
+
+.fmom-budget-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fmom-tb-parchment);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.fmom-budget-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.1rem 0;
+}
+
+.fmom-budget-kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 52%, var(--fmom-tb-ember) 48%);
+  line-height: 1.2;
+}
+
+.fmom-budget-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.fmom-budget-value {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  font-family: var(--fmom-tb-font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 96%, var(--fmom-tb-ember) 4%);
+}
+
+.fmom-budget-used {
+  color: var(--fmom-tb-ember);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--fmom-tb-ember) 35%, transparent);
+}
+
+.fmom-budget-sep {
+  font-weight: 500;
+  opacity: 0.45;
+  margin: 0 0.05rem;
+}
+
+.fmom-budget-cap {
+  opacity: 0.88;
+}
+
+.fmom-budget-unit {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 52%, transparent);
+  line-height: 1.35;
+}
+
+#fmom-totem-builder.application .fmom-totem-warn {
+  margin: 0;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, #4a1818 35%, var(--fmom-tb-bark) 65%);
+  border: 1px solid color-mix(in srgb, #e07070 35%, var(--fmom-tb-line) 65%);
+  color: color-mix(in srgb, #f0c8c8 90%, var(--fmom-tb-parchment) 10%);
+}
+
+#fmom-totem-builder.application .fmom-totem-warn code {
+  font-size: 0.9em;
+  padding: 0.05rem 0.25rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, black 35%, transparent);
+}
+
+/* --- Scroll region -------------------------------------------------------- */
+
+.fmom-totem-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 4px;
+  margin: 0;
+  scrollbar-color: color-mix(in srgb, var(--fmom-tb-ember) 40%, transparent) color-mix(in srgb, var(--fmom-tb-bark) 88%, transparent);
+  scrollbar-width: thin;
+}
+
+.fmom-totem-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fmom-totem-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--fmom-tb-ember) 45%, transparent),
+    color-mix(in srgb, var(--fmom-tb-copper) 35%, transparent)
+  );
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--fmom-tb-bark) 90%, transparent);
+}
+
+/* --- Fieldset / list ------------------------------------------------------ */
+
+.fmom-infusion-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.fmom-infusion-filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.55rem;
+  min-width: 0;
+}
+
+.fmom-infusion-filter__lbl {
+  flex: 0 0 auto;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 48%, transparent);
+}
+
+.fmom-infusion-filter {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--fmom-tb-font-ui);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  padding: 0.38rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 50%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 92%, black);
+  color: var(--fmom-tb-parchment);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.fmom-infusion-filter::placeholder {
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 38%, transparent);
+}
+
+.fmom-infusion-filter:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--fmom-tb-ember) 45%, var(--fmom-tb-line) 55%);
+}
+
+.fmom-infusion-filter-empty {
+  margin: 0.25rem 0 0.35rem;
+  font-size: 0.78rem;
+}
+
+.fmom-infusion-legend {
+  display: block;
+  float: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.85rem 0.75rem;
+  margin: 0 0 0.15rem 0;
+  border-radius: 12px;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--fmom-tb-bark) 82%, var(--fmom-tb-ember) 18%) 0%,
+    color-mix(in srgb, var(--fmom-tb-night) 90%, var(--fmom-tb-wood) 10%) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 48%, transparent);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
+  line-height: 1.35;
+  position: relative;
+  overflow: hidden;
+}
+
+.fmom-infusion-legend::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, transparent, var(--fmom-tb-copper) 50%, transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.fmom-infusion-legend__title {
+  display: block;
+  position: relative;
+  z-index: 1;
+  font-family: var(--fmom-tb-font-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 94%, var(--fmom-tb-ember) 6%);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+
+.fmom-infusion-legend__hint {
+  display: block;
+  position: relative;
+  z-index: 1;
+  margin-top: 0.4rem;
+  max-width: 36rem;
+  font-family: var(--fmom-tb-font-ui);
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 62%, transparent);
+}
+
+.fmom-infusion-list {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#fmom-totem-builder.application .fmom-totem-empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  font-style: italic;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 58%, transparent);
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--fmom-tb-bark) 85%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--fmom-tb-line) 55%, transparent);
+}
+
+/* --- Each infusion row ---------------------------------------------------- */
+
+.fmom-infusion-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.65rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--fmom-tb-bark) 86%, var(--fmom-tb-ember) 14%) 0%,
+    color-mix(in srgb, var(--fmom-tb-night) 92%, var(--fmom-tb-wood-mid) 8%) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 52%, transparent);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.fmom-infusion-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--fmom-tb-spirit) 70%, var(--fmom-tb-ember) 30%) 50%, transparent);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.fmom-infusion-row:hover {
+  border-color: color-mix(in srgb, var(--fmom-tb-ember) 38%, var(--fmom-row-border));
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--fmom-tb-ember) 12%, transparent);
+}
+
+.fmom-infusion-row.is-invalid {
+  border-color: color-mix(in srgb, #c94a4a 50%, var(--fmom-row-border));
+}
+
+.fmom-infusion-row.is-invalid::before {
+  background: linear-gradient(180deg, transparent, #c94a4a 50%, transparent);
+  opacity: 0.55;
+}
+
+.fmom-infusion-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  cursor: inherit;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-ember) 28%, var(--fmom-tb-line) 72%);
+  background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--fmom-tb-wood-mid) 80%, black) 0%, #0a0806 90%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 8%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.fmom-infusion-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  display: block;
+}
+
+.fmom-infusion-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding-bottom: 1px;
+}
+
+.fmom-infusion-title-row {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.3;
+}
+
+.fmom-infusion-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 96%, transparent);
+  word-break: break-word;
+}
+
+.fmom-infusion-stepper {
+  cursor: default;
+}
+
+.fmom-element-row {
+  cursor: default;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.6rem 0.6rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fmom-tb-night) 88%, var(--fmom-tb-spirit) 12%);
+  border: 1px dashed color-mix(in srgb, var(--fmom-tb-spirit) 28%, var(--fmom-tb-line) 72%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 4%, transparent);
+}
+
+.fmom-element-row__label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-spirit) 82%, var(--fmom-tb-parchment) 18%);
+  line-height: 1.3;
+}
+
+.fmom-element-slots {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-end;
+  gap: 0.55rem 0.75rem;
+}
+
+.fmom-el-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+  min-width: min(100%, 6.75rem);
+  flex: 1 1 6.25rem;
+}
+
+.fmom-el-slot__lbl {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 48%, var(--fmom-tb-ember) 52%);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.fmom-el-slot__copy {
+  opacity: 0.85;
+}
+
+.fmom-el-slot__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.25rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  background: color-mix(in srgb, var(--fmom-tb-ember) 18%, var(--fmom-tb-bark) 82%);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-ember) 35%, transparent);
+  color: var(--fmom-tb-parchment);
+}
+
+.fmom-el-slot-select {
+  width: 100%;
+  max-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  padding: 0.32rem 0.45rem;
+  min-height: 1.85rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 55%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 92%, black);
+  color: var(--fmom-tb-parchment);
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.fmom-el-slot-select:hover {
+  border-color: color-mix(in srgb, var(--fmom-tb-spirit) 35%, var(--fmom-tb-line) 65%);
+}
+
+.fmom-el-slot-select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--fmom-tb-spirit) 50%, var(--fmom-tb-line) 50%);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--fmom-tb-spirit) 22%, transparent),
+    inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.fmom-infusion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.fmom-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.14rem 0.42rem;
+  border-radius: 999px;
+  line-height: 1.3;
+}
+
+.fmom-tag-cost {
+  background: color-mix(in srgb, var(--fmom-tb-ember) 14%, var(--fmom-tb-bark) 86%);
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 92%, var(--fmom-tb-ember) 8%);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-ember) 32%, transparent);
+}
+
+.fmom-tag-repeat {
+  background: color-mix(in srgb, var(--fmom-tb-spirit) 14%, var(--fmom-tb-bark) 86%);
+  color: var(--fmom-tb-spirit);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-spirit) 35%, transparent);
+}
+
+.fmom-tag-once {
+  background: color-mix(in srgb, white 6%, var(--fmom-tb-bark) 94%);
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 50%, transparent);
+}
+
+.fmom-infusion-error {
+  margin: 0.15rem 0 0;
+  font-size: 0.6875rem;
+  color: #e88888;
+  line-height: 1.35;
+}
+
+/* --- Stepper -------------------------------------------------------------- */
+
+.fmom-infusion-stepper {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 55%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-night) 90%, var(--fmom-tb-bark) 10%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.fmom-step {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--fmom-tb-parchment);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.fmom-step:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fmom-tb-ember) 22%, transparent);
+  color: #fff;
+}
+
+.fmom-step:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.fmom-step-count {
+  min-width: 1.75rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fmom-tb-parchment);
+  padding: 0 0.15rem;
+  border-left: 1px solid color-mix(in srgb, var(--fmom-tb-line) 45%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--fmom-tb-line) 45%, transparent);
+  line-height: 2rem;
+}
+
+/* --- Footer + submit ------------------------------------------------------ */
+
+.fmom-totem-footer {
+  flex: 0 0 auto;
+  padding: 0.85rem 0 0.25rem;
+  margin-top: 0.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--fmom-tb-line) 38%, transparent);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--fmom-tb-bark) 45%, transparent) 40%,
+    color-mix(in srgb, var(--fmom-tb-bark) 65%, transparent) 100%
+  );
+}
+
+.fmom-submit {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem 0.55rem;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--fmom-tb-font-ui);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-ember) 48%, #2a1810);
+  color: #0c0a08;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--fmom-tb-ember) 88%, #fff4d8) 0%,
+    color-mix(in srgb, var(--fmom-tb-ember-deep) 72%, var(--fmom-tb-copper) 28%) 100%
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, white 28%, transparent) inset,
+    0 4px 0 color-mix(in srgb, var(--fmom-tb-ember-deep) 55%, transparent),
+    0 10px 28px color-mix(in srgb, var(--fmom-tb-ember) 18%, transparent);
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.fmom-submit-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    color-mix(in srgb, white 22%, transparent) 50%,
+    transparent 62%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.55s ease;
+  pointer-events: none;
+}
+
+.fmom-submit:hover:not(:disabled) .fmom-submit-shine {
+  transform: translateX(100%);
+}
+
+.fmom-submit:focus {
+  outline: none;
+}
+
+.fmom-submit:focus-visible {
+  outline: 2px solid var(--fmom-tb-ember);
+  outline-offset: 2px;
+}
+
+.fmom-submit-icon {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  color: #0c0a08;
+  background: color-mix(in srgb, black 14%, transparent);
+  border: 1px solid color-mix(in srgb, black 18%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
+}
+
+.fmom-submit-text {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.fmom-submit-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.fmom-submit-sub {
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.82;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.fmom-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, white 34%, transparent) inset,
+    0 5px 0 color-mix(in srgb, var(--fmom-tb-ember-deep) 58%, transparent),
+    0 14px 32px color-mix(in srgb, var(--fmom-tb-ember) 26%, transparent);
+}
+
+.fmom-submit:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, white 22%, transparent) inset,
+    0 3px 0 color-mix(in srgb, var(--fmom-tb-ember-deep) 50%, transparent),
+    0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.fmom-submit:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(0.25) brightness(0.94);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, white 12%, transparent) inset,
+    0 3px 0 color-mix(in srgb, var(--fmom-tb-ember-deep) 35%, transparent);
+}
+
+/* --- Two-column layout + preview column ------------------------------------ */
+
+.fmom-totem-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
+  gap: 0.85rem 1rem;
+  align-items: stretch;
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fmom-totem-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 0.65rem;
+}
+
+.fmom-totem-preview {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 48%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--fmom-tb-bark) 88%, var(--fmom-tb-spirit) 12%) 0%,
+    color-mix(in srgb, var(--fmom-tb-night) 92%, var(--fmom-tb-wood) 8%) 100%
+  );
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
+  overflow: hidden;
+}
+
+.fmom-totem-preview-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.75rem 0.85rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  scrollbar-color: color-mix(in srgb, var(--fmom-tb-spirit) 35%, transparent) color-mix(in srgb, var(--fmom-tb-bark) 88%, transparent);
+  scrollbar-width: thin;
+}
+
+.fmom-preview-card {
+  padding: 0.65rem 0.7rem 0.75rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--fmom-tb-night) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 42%, transparent);
+}
+
+.fmom-preview-card__title {
+  margin: 0 0 0.45rem;
+  font-family: var(--fmom-tb-font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 78%, var(--fmom-tb-spirit) 22%);
+}
+
+.fmom-preview-card__summary {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 88%, transparent);
+}
+
+.fmom-preview-list {
+  margin: 0 0 0.45rem;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 82%, transparent);
+}
+
+.fmom-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+.fmom-tag-preview {
+  background: color-mix(in srgb, var(--fmom-tb-spirit) 12%, var(--fmom-tb-bark) 88%);
+  border-color: color-mix(in srgb, var(--fmom-tb-spirit) 30%, transparent);
+  color: color-mix(in srgb, var(--fmom-tb-spirit) 92%, var(--fmom-tb-parchment) 8%);
+}
+
+.fmom-preview-extra {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--fmom-tb-ember) 75%, var(--fmom-tb-parchment) 25%);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.fmom-preview-extra i {
+  margin-top: 0.12rem;
+  opacity: 0.85;
+}
+
+.fmom-slot-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fmom-tb-bark) 92%, black);
+  border: 1px dashed color-mix(in srgb, var(--fmom-tb-line) 50%, transparent);
+}
+
+.fmom-slot-strip__label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 45%, transparent);
+}
+
+.fmom-slot-strip__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.fmom-slot-pip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2rem;
+  padding: 0.25rem 0.35rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fmom-tb-ember) 10%, var(--fmom-tb-night) 90%);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 45%, transparent);
+}
+
+.fmom-slot-pip__lv {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 50%, transparent);
+}
+
+.fmom-slot-pip__n {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fmom-tb-parchment);
+}
+
+.fmom-side-panel__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--fmom-tb-font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 85%, var(--fmom-tb-ember) 15%);
+}
+
+.fmom-side-panel__lead {
+  margin: 0 0 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 58%, transparent);
+}
+
+.fmom-ethereal-panel,
+.fmom-convergence-panel {
+  padding: 0.6rem 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--fmom-tb-night) 88%, var(--fmom-tb-ember) 12%);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 48%, transparent);
+}
+
+.fmom-ethereal-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fmom-chip-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.58rem 0.6rem;
+  min-height: 2.85rem;
+  box-sizing: border-box;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 52%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 90%, transparent);
+  color: var(--fmom-tb-parchment);
+  font-family: var(--fmom-tb-font-ui);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fmom-chip-toggle:hover {
+  border-color: color-mix(in srgb, var(--fmom-tb-ember) 35%, var(--fmom-tb-line) 65%);
+}
+
+.fmom-chip-toggle.is-on {
+  border-color: color-mix(in srgb, var(--fmom-tb-spirit) 45%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-spirit) 14%, var(--fmom-tb-bark) 86%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--fmom-tb-spirit) 18%, transparent);
+}
+
+.fmom-chip-toggle__icon {
+  flex: 0 0 auto;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0.2rem;
+  box-sizing: border-box;
+  background: color-mix(in srgb, black 25%, transparent);
+  color: color-mix(in srgb, var(--fmom-tb-ember) 70%, var(--fmom-tb-parchment) 30%);
+}
+
+.fmom-chip-toggle.is-on .fmom-chip-toggle__icon {
+  color: var(--fmom-tb-spirit);
+}
+
+.fmom-chip-toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.fmom-chip-toggle__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.fmom-chip-toggle__hint {
+  font-size: 0.65rem;
+  opacity: 0.72;
+  letter-spacing: 0.04em;
+}
+
+.fmom-ethereal-plan-label {
+  display: block;
+  margin: 0.55rem 0 0.35rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fmom-tb-ember) 55%, var(--fmom-tb-parchment) 45%);
+}
+
+.fmom-ethereal-plan {
+  width: 100%;
+  max-width: 100%;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 50%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 92%, black);
+  color: var(--fmom-tb-parchment);
+  cursor: pointer;
+}
+
+.fmom-ethereal-warn {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+}
+
+.fmom-convergence-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 50%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 88%, var(--fmom-tb-copper) 12%);
+  color: var(--fmom-tb-parchment);
+  font-family: var(--fmom-tb-font-ui);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.fmom-convergence-toggle:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--fmom-tb-copper) 40%, transparent);
+}
+
+.fmom-convergence-toggle.is-on {
+  border-color: color-mix(in srgb, var(--fmom-tb-copper) 55%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-copper) 18%, var(--fmom-tb-bark) 82%);
+}
+
+.fmom-convergence-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fmom-convergence-toggle__check {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  color: color-mix(in srgb, var(--fmom-tb-copper) 80%, var(--fmom-tb-parchment) 20%);
+}
+
+.fmom-convergence-toggle__label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.fmom-convergence-warn {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+}
+
+/* --- Totem A/B tabs + compact dual preview -------------------------------- */
+
+.fmom-totem-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.fmom-totem-tab {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.52rem 0.55rem 0.55rem;
+  min-height: 3.1rem;
+  box-sizing: border-box;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 52%, transparent);
+  background: color-mix(in srgb, var(--fmom-tb-bark) 90%, transparent);
+  color: var(--fmom-tb-parchment);
+  font-family: var(--fmom-tb-font-ui);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fmom-totem-tab:hover {
+  border-color: color-mix(in srgb, var(--fmom-tb-ember) 28%, var(--fmom-tb-line) 72%);
+}
+
+.fmom-totem-tab.is-active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 6%, transparent);
+}
+
+.fmom-totem-tab--a.is-active {
+  border-color: color-mix(in srgb, var(--fmom-tb-ember) 55%, var(--fmom-tb-line) 45%);
+  background: color-mix(in srgb, var(--fmom-tb-ember) 12%, var(--fmom-tb-bark) 88%);
+}
+
+.fmom-totem-tab--b.is-active {
+  border-color: color-mix(in srgb, var(--fmom-tb-spirit) 50%, var(--fmom-tb-line) 50%);
+  background: color-mix(in srgb, var(--fmom-tb-spirit) 10%, var(--fmom-tb-bark) 90%);
+}
+
+.fmom-totem-tab__badge {
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  font-family: var(--fmom-tb-font-display);
+  background: color-mix(in srgb, black 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 45%, transparent);
+}
+
+.fmom-totem-tab--a .fmom-totem-tab__badge {
+  color: var(--fmom-tb-ember);
+}
+
+.fmom-totem-tab--b .fmom-totem-tab__badge {
+  color: var(--fmom-tb-spirit);
+}
+
+.fmom-totem-tab__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.fmom-totem-tab__title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.fmom-totem-tab__sub {
+  font-size: 0.58rem;
+  opacity: 0.72;
+  line-height: 1.25;
+}
+
+.fmom-dual-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: start;
+}
+
+.fmom-preview-card--compact {
+  padding: 0.45rem 0.48rem 0.5rem;
+  margin: 0;
+}
+
+.fmom-preview-card.is-totem-a {
+  border-left: 3px solid color-mix(in srgb, var(--fmom-tb-ember) 75%, transparent);
+}
+
+.fmom-preview-card.is-totem-b {
+  border-left: 3px solid color-mix(in srgb, var(--fmom-tb-spirit) 70%, transparent);
+}
+
+.fmom-preview-card__head {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.fmom-preview-card__letter {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-family: var(--fmom-tb-font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.is-totem-a .fmom-preview-card__letter {
+  background: color-mix(in srgb, var(--fmom-tb-ember) 22%, var(--fmom-tb-bark) 78%);
+  color: var(--fmom-tb-ember);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-ember) 40%, transparent);
+}
+
+.is-totem-b .fmom-preview-card__letter {
+  background: color-mix(in srgb, var(--fmom-tb-spirit) 18%, var(--fmom-tb-bark) 82%);
+  color: var(--fmom-tb-spirit);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-spirit) 38%, transparent);
+}
+
+.fmom-preview-card__headtext {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fmom-preview-card__headtext .fmom-preview-card__title {
+  margin: 0 0 0.12rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+}
+
+.fmom-preview-card__hint {
+  margin: 0;
+  font-size: 0.58rem;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 55%, transparent);
+}
+
+.fmom-preview-card__summary--inline {
+  margin: 0 0 0.3rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.fmom-preview-chips {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.22rem 0.28rem;
+  margin: 0 0 0.28rem;
+}
+
+.fmom-preview-chip {
+  font-size: 0.58rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.12rem 0.32rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fmom-tb-bark) 88%, var(--fmom-tb-ember) 12%);
+  border: 1px solid color-mix(in srgb, var(--fmom-tb-line) 48%, transparent);
+  color: color-mix(in srgb, var(--fmom-tb-parchment) 90%, transparent);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fmom-preview-tags--inline {
+  margin-top: 0;
+  gap: 0.22rem;
+}
+
+.fmom-tag-preview--sm {
+  font-size: 0.55rem;
+  padding: 0.08rem 0.28rem;
+}
+
+.fmom-preview-extra--tight {
+  margin: 0.2rem 0 0;
+  font-size: 0.62rem;
+}
+
+.fmom-slot-strip--compact {
+  padding: 0.35rem 0.42rem;
+}
+
+.fmom-slot-strip--compact .fmom-slot-pip {
+  min-width: 1.65rem;
+  padding: 0.18rem 0.22rem;
+}
+
+.fmom-slot-strip--compact .fmom-slot-pip__n {
+  font-size: 0.7rem;
+}
+
+.fmom-side-panel--tight {
+  padding: 0.45rem 0.5rem 0.52rem;
+}
+
+.fmom-side-panel__lead--short {
+  margin-bottom: 0.4rem;
+  font-size: 0.65rem;
+  line-height: 1.35;
+}
+
+.fmom-ethereal-toggles--row {
+  flex-direction: row;
+  gap: 0.35rem;
+}
+
+.fmom-chip-toggle--compact {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 2.95rem;
+  padding: 0.5rem 0.4rem;
+  gap: 0.4rem;
+}
+
+.fmom-chip-toggle--compact .fmom-chip-toggle__icon {
+  width: 1.85rem;
+  height: 1.85rem;
+  font-size: 0.78rem;
+  padding: 0.22rem;
+}
+
+.fmom-chip-toggle--compact .fmom-chip-toggle__name {
+  font-size: 0.68rem;
+}
+
+.fmom-chip-toggle--compact .fmom-chip-toggle__hint {
+  font-size: 0.55rem;
+}
+
+.fmom-totem-preview-scroll {
+  gap: 0.5rem;
+  padding: 0.55rem 0.58rem 0.65rem;
+}
+
+@media (max-width: 900px) {
+  .fmom-totem-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fmom-dual-preview {
+    grid-template-columns: 1fr;
+  }
+}
