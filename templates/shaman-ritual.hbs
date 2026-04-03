@@ -161,16 +161,16 @@
       {{/if}}
       <p class="fmom-sr__lead">
         {{#if showDebugAttuneUi}}
-        Debug mode: pick attunement (d4 bracket) with no table roll.
+        Debug mode: pick an attunement row with no table roll.
         {{else}}
         Cast on the Attunement table, let the spirits show whether they are peaceful, fierce, wild, or heavy-hearted.
         {{/if}}
       </p>
       {{#if showDebugAttuneUi}}
       <div class="fmom-sr__debug-attune" role="group" aria-label="Manual attunement">
-        {{#each debugAttuneMoods}}
-        <button type="button" class="fmom-sr__debug-attune-btn" data-action="pickDebugAttunement" data-mood-id="{{id}}">
-          <span class="fmom-sr__debug-attune-d4">d4 {{d4}}</span>
+        {{#each debugAttunementRows}}
+        <button type="button" class="fmom-sr__debug-attune-btn" data-action="pickDebugAttunement" data-result-id="{{resultId}}">
+          <span class="fmom-sr__debug-attune-d4">{{rangeLabel}}</span>
           <span class="fmom-sr__debug-attune-name">{{label}}</span>
         </button>
         {{/each}}
@@ -186,8 +186,8 @@
         {{#unless showDebugAttuneUi}}
         <button type="button" class="fmom-sr__btn fmom-sr__btn--primary fmom-sr__btn--wide" data-action="rollAttunement">
           <span class="fmom-sr__btn-shine" aria-hidden="true"></span>
-          <i class="fa-solid fa-dice-d4" aria-hidden="true"></i>
-          Roll attunement
+          <i class="fa-solid fa-dice" aria-hidden="true"></i>
+          Roll attunement ({{attuneRollFormula}})
         </button>
         {{/unless}}
         {{else}}

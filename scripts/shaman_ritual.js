@@ -13,18 +13,6 @@ const ATTUNEMENT_TABLE_UUID =
 const SHAMAN_CLASS_COMPENDIUM_UUID =
   "Compendium.falcrests-machinations-of-madness.fmom-classes.Item.S0y9DnvEzFLo4AsO";
 
-/** Parent class item for attunement ActiveEffects (fmom-classes). */
-const ATTUNEMENT_EFFECT_UUID_PREFIX =
-  "Compendium.falcrests-machinations-of-madness.fmom-classes.Item.3Jj5sQLZGKdf9Atr.ActiveEffect";
-
-/** @type {Record<string, string>} mood id → compendium ActiveEffect UUID */
-const ATTUNEMENT_EFFECT_UUIDS = {
-  peaceful: `${ATTUNEMENT_EFFECT_UUID_PREFIX}.HDI0ZTDnTTogvmxf`,
-  aggressive: `${ATTUNEMENT_EFFECT_UUID_PREFIX}.M4SqcNMunoWjm6JB`,
-  chaotic: `${ATTUNEMENT_EFFECT_UUID_PREFIX}.X189s1E7Rulgns78`,
-  sorrowful: `${ATTUNEMENT_EFFECT_UUID_PREFIX}.52FoEcLJzT34tt0M`
-};
-
 /**
  * @type {{ id: string, label: string, spell: string|null, d4: number }[]}
  */
@@ -38,6 +26,15 @@ const ATTUNEMENT_MOODS = [
 const ATTUNEMENT_MOOD_BY_ID = Object.fromEntries(ATTUNEMENT_MOODS.map((m) => [m.id, m]));
 const ATTUNEMENT_BRACKET_LABELS = new Set(ATTUNEMENT_MOODS.map((m) => m.label));
 ATTUNEMENT_BRACKET_LABELS.add("Attunement");
+
+/** @type {RegExp}
+ * Prepared mood spell phrase (UUID link in feature/table text). */
+const ATTUNEMENT_PREPARED_SPELL_RE =
+  /additionally,?\s+you have the spell\s+@UUID\[([^\]]+)\]\{[^}]*\}\s+prepared(?:\s+for this period)?/i;
+/** @type {RegExp}
+ * Once-per-period spell phrase. */
+const ATTUNEMENT_ONCE_SPELL_RE =
+  /you can cast\s+@UUID\[([^\]]+)\]\{[^}]*\}\s+once(?:\s+during this period)?/i;
 
 const PHB_SPELL = "Compendium.dnd-players-handbook.spells.Item";
 
@@ -232,30 +229,64 @@ function spiritIdFromTableText(text) {
 
 const NAME_BRACKET_RE = /^(.+?)\s*\[([^\]]+)\]\s*$/;
 
-const ATTUNEMENT_EFFECT_SHORT_IDS = new Set([
-  "HDI0ZTDnTTogvmxf",
-  "M4SqcNMunoWjm6JB",
-  "X189s1E7Rulgns78",
-  "52FoEcLJzT34tt0M"
-]);
-
 /**
- * @param {ActiveEffect} effect
- * @returns {boolean}
+ * @param {Actor} actor
+ * @returns {Item|null}
  */
-function effectIsShamanAttunement(effect) {
-  if (effect.getFlag(MODULE_ID, "attunementEffect")) return true;
-  const o = String(effect.origin ?? "");
-  if (!o.includes("3Jj5sQLZGKdf9Atr.ActiveEffect")) return false;
-  return [...ATTUNEMENT_EFFECT_SHORT_IDS].some((id) => o.includes(id));
+function findActorAttunementRitualFeature(actor) {
+  if (!actor?.items) return null;
+  const exact = /^\s*attunement\s+ritual\s*$/i;
+  for (const item of actor.items) {
+    if (item.type !== "feat" && item.type !== "feature") continue;
+    if (exact.test(String(item.name ?? "").trim())) return item;
+  }
+  for (const item of actor.items) {
+    if (item.type !== "feat" && item.type !== "feature") continue;
+    const n = String(item.name ?? "");
+    if (/attunement/i.test(n) && /ritual/i.test(n)) return item;
+  }
+  return null;
 }
 
 /**
+ * @param {ActiveEffect} effect
+ * @param {Item|null} attunementFeature feat on the same actor
+ * @param {Actor} actor
+ * @returns {boolean}
+ */
+function effectOriginReferencesAttunementFeature(effect, attunementFeature, actor) {
+  if (!attunementFeature?.id) return false;
+  const o = String(effect.origin ?? "");
+  if (!o) return false;
+  const fu = String(attunementFeature.uuid ?? "");
+  if (fu && (o === fu || o.startsWith(`${fu}.`))) return true;
+  if (!o.includes(`.Item.${attunementFeature.id}`)) return false;
+  if (actor?.id && !o.includes(actor.id)) return false;
+  return true;
+}
+
+/**
+ * @param {ActiveEffect} effect
+ * @param {Item|null} attunementFeature
+ * @param {Actor} actor
+ * @returns {boolean}
+ */
+function actorEffectIsFromAttunementRitual(effect, attunementFeature, actor) {
+  if (effect.getFlag(MODULE_ID, "attunementEffect")) return true;
+  if (attunementFeature) return effectOriginReferencesAttunementFeature(effect, attunementFeature, actor);
+  return false;
+}
+
+/**
+ * Remove every ActiveEffect on the actor granted from this ritual (module flag or origin on the Attunement Ritual feature item).
  * @param {Actor} actor
  * @returns {Promise<void>}
  */
-async function removeAllShamanAttunementEffects(actor) {
-  const ids = actor.effects.filter(effectIsShamanAttunement).map((e) => e.id);
+async function removeAllAttunementRitualEffects(actor) {
+  const feature = findActorAttunementRitualFeature(actor);
+  const ids = actor.effects
+    .filter((e) => actorEffectIsFromAttunementRitual(e, feature, actor))
+    .map((e) => e.id);
   if (ids.length) await actor.deleteEmbeddedDocuments("ActiveEffect", ids);
 }
 
@@ -268,6 +299,10 @@ async function deleteAttunementBracketSpells(actor) {
   const toDelete = [];
   for (const item of actor.items) {
     if (item.type !== "spell") continue;
+    if (item.getFlag(MODULE_ID, "attunementMoodSpell")) {
+      toDelete.push(item.id);
+      continue;
+    }
     const m = item.name?.match(NAME_BRACKET_RE);
     if (!m) continue;
     const inner = m[2].trim();
@@ -277,51 +312,592 @@ async function deleteAttunementBracketSpells(actor) {
 }
 
 /**
- * Strip prior attunement effects, then apply the compendium effect for this mood.
+ * New ActiveEffect embedded on the Attunement Ritual item (editable, reused next rest). Starts disabled until attunement resolves.
+ * @param {Item} feature
  * @param {Actor} actor
- * @param {string} moodId peaceful | aggressive | chaotic | sorrowful
+ * @param {string} name
+ * @returns {object}
+ */
+function placeholderAttunementEffectOnFeature(feature, actor, name) {
+  return {
+    name,
+    img: feature.img || actor.img || "icons/svg/aura.svg",
+    transfer: false,
+    disabled: true,
+    duration: {},
+    changes: []
+  };
+}
+
+/**
+ * Disable every ActiveEffect embedded on the actor's Attunement Ritual feature (ritual start).
+ * @param {Actor} actor
  * @returns {Promise<void>}
  */
-async function swapAttunementToMood(actor, moodId) {
-  const mood = ATTUNEMENT_MOOD_BY_ID[moodId];
-  const uuid = ATTUNEMENT_EFFECT_UUIDS[moodId];
-  if (!mood || !uuid) return;
+async function disableAllAttunementFeatureEmbeddedEffects(actor) {
+  const feature = findActorAttunementRitualFeature(actor);
+  if (!feature?.effects?.size) return;
+  const updates = [...feature.effects].map((e) => ({ _id: e.id, disabled: true }));
+  await feature.updateEmbeddedDocuments("ActiveEffect", updates);
+}
 
-  await removeAllShamanAttunementEffects(actor);
+/**
+ * @param {Actor} actor
+ * @returns {Item|null}
+ */
+function attunementFeatureFromActor(actor) {
+  const f = findActorAttunementRitualFeature(actor);
+  if (!f?.id) return null;
+  return actor.items.get(f.id) ?? f;
+}
 
-  const src = await fromUuid(uuid);
-  if (!src || src.documentName !== "ActiveEffect") {
-    ui.notifications.warn(`Could not load attunement effect (${mood.label}).`);
+/**
+ * Clear prior attunement ritual effects on the actor; ensure the chosen behaviour exists on the Attunement Ritual feature (create placeholder on the feature if missing); enable only that effect on the feature, others disabled; copy it onto the actor as the active attunement.
+ * @param {Actor} actor
+ * @param {string} behaviourEffectName e.g. Peaceful, Melinara's Dominance (from table / outcome)
+ * @returns {Promise<void>}
+ */
+async function applyAttunementRitualEffectByBehaviourName(actor, behaviourEffectName) {
+  await removeAllAttunementRitualEffects(actor);
+
+  const want = String(behaviourEffectName ?? "").trim();
+  if (!want) return;
+
+  let feature = attunementFeatureFromActor(actor);
+  if (!feature) {
+    ui.notifications.warn("Attunement Ritual feature not found on this actor.");
     return;
   }
 
-  const data = src.toObject();
+  const wantLower = want.toLowerCase();
+  let match = [...(feature.effects ?? [])].find((e) => String(e.name ?? "").trim().toLowerCase() === wantLower);
+
+  if (!match) {
+    await feature.createEmbeddedDocuments("ActiveEffect", [
+      placeholderAttunementEffectOnFeature(feature, actor, want)
+    ]);
+    feature = attunementFeatureFromActor(actor);
+    if (!feature) return;
+    match = [...(feature.effects ?? [])].find((e) => String(e.name ?? "").trim().toLowerCase() === wantLower);
+  }
+
+  if (!match) {
+    ui.notifications.error("Attunement: could not create or find Active Effect on the Attunement Ritual feature.");
+    return;
+  }
+
+  const disableUpdates = [...feature.effects].map((e) => ({
+    _id: e.id,
+    disabled: e.id !== match.id
+  }));
+  if (disableUpdates.length) await feature.updateEmbeddedDocuments("ActiveEffect", disableUpdates);
+
+  feature = attunementFeatureFromActor(actor);
+  const liveMatch = feature ? [...feature.effects].find((e) => e.id === match.id) : null;
+  if (!feature || !liveMatch) return;
+
+  const data = liveMatch.toObject();
   delete data._id;
-  data.origin = actor.uuid;
-  foundry.utils.setProperty(data, `flags.${MODULE_ID}`, {
-    attunementEffect: true,
-    attunementMood: moodId
-  });
+  data.origin = feature.uuid;
+  data.disabled = false;
+  foundry.utils.setProperty(data, `flags.${MODULE_ID}`, { attunementEffect: true });
   await actor.createEmbeddedDocuments("ActiveEffect", [data]);
 }
 
 /**
- * @param {string} blob
- * @param {number|null} d4
- * @returns {string|null} mood id
+ * @param {string} s
+ * @returns {string}
  */
-function parseAttunementMood(blob, d4) {
-  const lower = (blob || "").toLowerCase();
+function normalizeAttunementText(s) {
+  return String(s ?? "")
+    .replace(/\u2800/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * @param {string} html
+ * @returns {string}
+ */
+function htmlToPlainForAttunement(html) {
+  return normalizeAttunementText(String(html ?? "").replace(/<[^>]*>/g, "\n"));
+}
+
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+function attunementTitleLineFromText(text) {
+  const normalized = normalizeAttunementText(htmlToPlainForAttunement(text));
+  const lines = normalized.split(/[\n\r]+/).map((l) => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    if (/^\d+$/.test(line)) continue;
+    if (/^when you\b/i.test(line)) continue;
+    if (line.length < 2) continue;
+    return line;
+  }
+  return "Attunement";
+}
+
+/**
+ * @param {string} blob
+ * @returns {string|null} peaceful | aggressive | chaotic | sorrowful
+ */
+function matchStandardEffectMoodId(blob) {
+  const lower = normalizeAttunementText(blob).toLowerCase();
   if (lower.includes("peaceful")) return "peaceful";
   if (lower.includes("aggressive")) return "aggressive";
   if (lower.includes("chaotic")) return "chaotic";
   if (lower.includes("sorrowful")) return "sorrowful";
-  const d = Number(d4);
-  if (d === 1) return "peaceful";
-  if (d === 2) return "aggressive";
-  if (d === 3) return "chaotic";
-  if (d === 4) return "sorrowful";
   return null;
+}
+
+/**
+ * @param {TableResult} r
+ * @returns {number}
+ */
+function tableResultRangeLow(r) {
+  const range = r.range;
+  if (Array.isArray(range) && range.length >= 1) {
+    const lo = Number(range[0]);
+    return Number.isFinite(lo) ? lo : 0;
+  }
+  if (range && typeof range === "object") {
+    const lo = Number(/** @type {{ min?: unknown }} */ (range).min);
+    return Number.isFinite(lo) ? lo : 0;
+  }
+  return 0;
+}
+
+/**
+ * @param {RollTable|null} table
+ * @param {number|null} rollTotal
+ * @returns {string|null}
+ */
+function effectMoodFromDiceFallback(rollTotal, table) {
+  if (!table?.results?.size) return null;
+  if (table.results.size !== 4) return null;
+  const d = Number(rollTotal);
+  if (!Number.isFinite(d) || d < 1 || d > 4) return null;
+  const sorted = [...table.results].sort((a, b) => tableResultRangeLow(a) - tableResultRangeLow(b));
+  const r = sorted[d - 1];
+  if (!r) return null;
+  const plain = htmlToPlainForAttunement(r.text ?? "");
+  const byKeyword = matchStandardEffectMoodId(plain);
+  if (byKeyword) return byKeyword;
+  const staticOrder = /** @type {const} */ (["peaceful", "aggressive", "chaotic", "sorrowful"]);
+  return staticOrder[d - 1] ?? null;
+}
+
+/**
+ * @param {string} blob
+ * @param {number|null} rollTotal
+ * @param {RollTable|null} table
+ * @returns {string|null}
+ */
+function resolveAttunementEffectMoodId(blob, rollTotal, table) {
+  const id = matchStandardEffectMoodId(blob);
+  if (id) return id;
+  return effectMoodFromDiceFallback(rollTotal, table);
+}
+
+/**
+ * @param {string} html
+ * @returns {string|null}
+ */
+function extractPreparedSpellUuid(html) {
+  const m = String(html ?? "").match(ATTUNEMENT_PREPARED_SPELL_RE);
+  return m?.[1]?.trim() ?? null;
+}
+
+/**
+ * @param {string} html
+ * @returns {string|null}
+ */
+function extractOnceSpellUuid(html) {
+  const m = String(html ?? "").match(ATTUNEMENT_ONCE_SPELL_RE);
+  return m?.[1]?.trim() ?? null;
+}
+
+/**
+ * @typedef {{ bracketLabel: string, effectMoodId: string|null, preparedSpellUuid: string|null, onceSpellUuid: string|null }} AttunementOutcome
+ */
+
+/**
+ * @param {string} resultHtml
+ * @param {number|null} rollTotal
+ * @param {RollTable|null} table
+ * @returns {AttunementOutcome}
+ */
+function parseAttunementOutcomeFromResultText(resultHtml, rollTotal, table) {
+  const plain = htmlToPlainForAttunement(resultHtml);
+  const bracketLabel = attunementTitleLineFromText(resultHtml);
+  const effectMoodId = resolveAttunementEffectMoodId(plain + "\n" + resultHtml, rollTotal, table);
+  return {
+    bracketLabel,
+    effectMoodId,
+    preparedSpellUuid: extractPreparedSpellUuid(resultHtml),
+    onceSpellUuid: extractOnceSpellUuid(resultHtml)
+  };
+}
+
+/**
+ * Attunement Ritual item: behaviour column + effect column (spell phrases live in effect HTML).
+ * @param {string} behaviourLabel plain text from 2nd column
+ * @param {string} effectHtml HTML from 3rd column
+ * @param {number|null} rollTotal
+ * @returns {AttunementOutcome}
+ */
+function parseAttunementOutcomeFromHtmlRow(behaviourLabel, effectHtml, rollTotal) {
+  const plain = htmlToPlainForAttunement(effectHtml);
+  const effectMoodId = resolveAttunementEffectMoodId(
+    `${plain}\n${behaviourLabel}`,
+    rollTotal,
+    null
+  );
+  return {
+    bracketLabel: behaviourLabel,
+    effectMoodId,
+    preparedSpellUuid: extractPreparedSpellUuid(effectHtml),
+    onceSpellUuid: extractOnceSpellUuid(effectHtml)
+  };
+}
+
+/**
+ * @param {string} cellPlain
+ * @returns {{ low: number, high: number }|null}
+ */
+function parseAttunementRollColumnRange(cellPlain) {
+  const t = normalizeAttunementText(cellPlain);
+  const rangeMatch = t.match(/^(\d+)\s*[\u2013\u2014-]\s*(\d+)/);
+  if (rangeMatch) {
+    const a = Number(rangeMatch[1]);
+    const b = Number(rangeMatch[2]);
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      return { low: Math.min(a, b), high: Math.max(a, b) };
+    }
+  }
+  const numMatch = t.match(/^(\d+)/);
+  if (numMatch) {
+    const n = Number(numMatch[1]);
+    if (Number.isFinite(n)) return { low: n, high: n };
+  }
+  return null;
+}
+
+/**
+ * @param {HTMLTableRowElement} tr
+ * @returns {HTMLTableCellElement[]}
+ */
+function attunementTableRowCells(tr) {
+  return [...tr.querySelectorAll("td, th")];
+}
+
+/**
+ * Parse the prose table in the Attunement Ritual feature description (Roll / Behaviour / Effect columns).
+ * @param {string} html
+ * @returns {{ rows: { rollLow: number, rollHigh: number, label: string, effectHtml: string }[], rollFormula: string, maxRoll: number }|null}
+ */
+function parseAttunementDescriptionTable(html) {
+  if (!html || typeof html !== "string" || !html.includes("<table")) return null;
+  let doc;
+  try {
+    doc = new DOMParser().parseFromString(`<div id="fmom-att-root">${html}</div>`, "text/html");
+  } catch {
+    return null;
+  }
+  const root = doc.getElementById("fmom-att-root");
+  const table = root?.querySelector("table");
+  if (!table) return null;
+
+  const trs = [...table.querySelectorAll("tr")];
+  if (trs.length < 2) return null;
+
+  let startIdx = 0;
+  const headCells = attunementTableRowCells(trs[0]);
+  if (headCells.length >= 3) {
+    const c0 = normalizeAttunementText(headCells[0].textContent ?? "").toLowerCase();
+    const c1 = normalizeAttunementText(headCells[1].textContent ?? "").toLowerCase();
+    const looksHeader = /roll/.test(c0) && (/behaviou?r/.test(c1) || /behavior/.test(c1));
+    if (looksHeader) startIdx = 1;
+  }
+
+  /** @type {{ rollLow: number, rollHigh: number, label: string, effectHtml: string }[]} */
+  const rows = [];
+  for (let i = startIdx; i < trs.length; i++) {
+    const tds = attunementTableRowCells(trs[i]);
+    if (tds.length < 3) continue;
+    const rollPlain = normalizeAttunementText(tds[0].textContent ?? "");
+    const range = parseAttunementRollColumnRange(rollPlain);
+    if (!range) continue;
+
+    const behaviourPlain = normalizeAttunementText(tds[1].textContent ?? "");
+    const label =
+      behaviourPlain
+        .split(/[\n\r]+/)
+        .map((l) => l.trim())
+        .filter(Boolean)[0] || "Attunement";
+
+    const effectHtml = tds[2].innerHTML.trim();
+    rows.push({ rollLow: range.low, rollHigh: range.high, label, effectHtml });
+  }
+
+  if (!rows.length) return null;
+
+  const maxRoll = Math.max(...rows.map((r) => r.rollHigh));
+  let rollFormula = `1d${maxRoll}`;
+
+  if (startIdx > 0 && trs[0]) {
+    const h0 = normalizeAttunementText(attunementTableRowCells(trs[0])[0]?.textContent ?? "");
+    const fm = h0.match(/1d(\d+)/i);
+    if (fm) {
+      const n = Number(fm[1]);
+      if (Number.isFinite(n) && n >= maxRoll) rollFormula = `1d${n}`;
+    }
+  }
+
+  return { rows, rollFormula, maxRoll };
+}
+
+/**
+ * @param {{ rollLow: number, rollHigh: number, label: string, effectHtml: string }[]} parsedRows
+ * @returns {AttunementDebugRow[]}
+ */
+function htmlParsedRowsToDebugRows(parsedRows) {
+  return parsedRows.map((r, idx) => ({
+    resultId: `html-${idx}`,
+    rangeLabel: r.rollLow === r.rollHigh ? String(r.rollLow) : `${r.rollLow}–${r.rollHigh}`,
+    label: r.label,
+    text: r.effectHtml,
+    debugRollTotal: r.rollLow,
+    rollLow: r.rollLow,
+    rollHigh: r.rollHigh
+  }));
+}
+
+/**
+ * @param {AttunementDebugRow[]} rows
+ * @param {number} total
+ * @returns {AttunementDebugRow|null}
+ */
+function findAttunementRowForDiceTotal(rows, total) {
+  const t = Number(total);
+  if (!Number.isFinite(t)) return null;
+  return rows.find((r) => {
+    const lo = r.rollLow ?? r.debugRollTotal;
+    const hi = r.rollHigh ?? r.debugRollTotal;
+    return t >= lo && t <= hi;
+  }) ?? null;
+}
+
+/**
+ * Evaluate a simple formula (e.g. 1d8).
+ * Do not use {@link Roll#evaluateSync} with `strict: false` for dice — Foundry treats random terms as 0, so chat shows total 0.
+ * v13+: {@link Roll#evaluate} returns a Promise. Older: `evaluate({ async: true })`.
+ * @param {string} formula e.g. 1d8
+ * @param {object} rollData
+ * @returns {Promise<Roll>}
+ */
+async function evaluateAttunementDiceRoll(formula, rollData) {
+  const f = String(formula);
+  const d = rollData;
+
+  let roll = new Roll(f, d);
+  try {
+    await Promise.resolve(roll.evaluate());
+  } catch {
+    roll = new Roll(f, d);
+    await Promise.resolve(roll.evaluate({ async: true }));
+    return roll;
+  }
+
+  if (!Number.isFinite(roll.total) || roll.total < 1) {
+    const r2 = new Roll(f, d);
+    await Promise.resolve(r2.evaluate({ async: true }));
+    return r2;
+  }
+
+  return roll;
+}
+
+/**
+ * @typedef {{ resultId: string, rangeLabel: string, label: string, text: string, debugRollTotal: number, rollLow?: number, rollHigh?: number, legacyMoodId?: string }} AttunementDebugRow
+ */
+
+/**
+ * @returns {AttunementDebugRow[]}
+ */
+function legacyAttunementDebugRows() {
+  return ATTUNEMENT_MOODS.map((m) => ({
+    resultId: `legacy:${m.id}`,
+    rangeLabel: String(m.d4),
+    label: m.label,
+    text: `<p><strong>${m.label}</strong></p>`,
+    debugRollTotal: m.d4,
+    rollLow: m.d4,
+    rollHigh: m.d4,
+    legacyMoodId: m.id
+  }));
+}
+
+/**
+ * @param {RollTable} table
+ * @returns {AttunementDebugRow[]}
+ */
+function buildAttunementDebugRowsFromTable(table) {
+  const sorted = [...table.results].sort((a, b) => tableResultRangeLow(a) - tableResultRangeLow(b));
+  return sorted.map((r) => {
+    const text = r.text ?? "";
+    const lo = tableResultRangeLow(r);
+    let hi = lo;
+    const range = r.range;
+    if (Array.isArray(range) && range.length >= 2) {
+      const t = Number(range[1]);
+      if (Number.isFinite(t)) hi = t;
+    } else if (range && typeof range === "object" && "max" in range) {
+      const t = Number(/** @type {{ max?: unknown }} */ (range).max);
+      if (Number.isFinite(t)) hi = t;
+    }
+    const rangeLabel = lo === hi ? String(lo) : `${lo}–${hi}`;
+    return {
+      resultId: r.id,
+      rangeLabel,
+      label: attunementTitleLineFromText(text),
+      text,
+      debugRollTotal: lo,
+      rollLow: lo,
+      rollHigh: hi
+    };
+  });
+}
+
+/**
+ * @typedef {"html"|"rolltable"|"legacy"} AttunementConfigSource
+ */
+
+/**
+ * Resolve attunement rows from the character's Attunement Ritual feature: embedded HTML table first, else RollTable.
+ * @param {Actor} actor
+ * @returns {Promise<{ source: AttunementConfigSource, uuid: string|null, table: RollTable|null, rows: AttunementDebugRow[], rollFormula: string }>}
+ */
+async function resolveAttunementRollTable(actor) {
+  const feature = findActorAttunementRitualFeature(actor);
+  const desc = String(
+    foundry.utils.getProperty(feature, "system.description.value") ??
+      foundry.utils.getProperty(feature, "description") ??
+      ""
+  );
+
+  const parsed = parseAttunementDescriptionTable(desc);
+  if (parsed?.rows?.length) {
+    return {
+      source: "html",
+      uuid: null,
+      table: null,
+      rows: htmlParsedRowsToDebugRows(parsed.rows),
+      rollFormula: parsed.rollFormula
+    };
+  }
+
+  let table = null;
+  try {
+    table = await fromUuid(ATTUNEMENT_TABLE_UUID);
+  } catch {
+    /* ignore */
+  }
+  if (table?.documentName === "RollTable") {
+    return {
+      source: "rolltable",
+      uuid: ATTUNEMENT_TABLE_UUID,
+      table,
+      rows: buildAttunementDebugRowsFromTable(table),
+      rollFormula: normalizeAttunementRollFormula(String(table.formula ?? "1d4"))
+    };
+  }
+
+  return {
+    source: "legacy",
+    uuid: ATTUNEMENT_TABLE_UUID,
+    table: null,
+    rows: legacyAttunementDebugRows(),
+    rollFormula: "1d4"
+  };
+}
+
+/**
+ * @param {string} f
+ * @returns {string}
+ */
+function normalizeAttunementRollFormula(f) {
+  const s = String(f ?? "").trim();
+  if (!s) return "1d4";
+  if (/^1d\d+/i.test(s)) return s;
+  if (/^d\d+/i.test(s)) return `1${s}`;
+  return s;
+}
+
+/**
+ * @param {object} itemData spell `toObject()` data
+ * @param {number} max
+ */
+function applySpellLimitedUsesForPeriod(itemData, max) {
+  const sys = itemData.system ?? (itemData.system = {});
+  const u = sys.uses;
+  if (u && typeof u === "object") {
+    if ("max" in u) /** @type {{ max?: number }} */ (u).max = max;
+    if ("value" in u) /** @type {{ value?: number }} */ (u).value = max;
+    if ("spent" in u) /** @type {{ spent?: number }} */ (u).spent = 0;
+    if ("recovery" in u && !/** @type {{ recovery?: string }} */ (u).recovery) {
+      /** @type {{ recovery?: string }} */ (u).recovery = "lr";
+    }
+    return;
+  }
+  sys.uses = { max, spent: 0, recovery: "lr" };
+}
+
+/**
+ * @param {Actor} actor
+ * @param {object} opts
+ * @param {string} opts.spellUuid
+ * @param {string} opts.bracketLabel
+ * @param {number} opts.maxSpellLevel
+ * @param {Item|undefined|null} opts.shamanClassItem
+ * @param {boolean} [opts.limitedUse]
+ * @returns {Promise<boolean>}
+ */
+async function grantAttunementMoodSpell(actor, opts) {
+  const { spellUuid, bracketLabel, maxSpellLevel, shamanClassItem, limitedUse = false } = opts;
+  const src = await fetchSpellItem(spellUuid);
+  if (!src) {
+    ui.notifications.warn(`Could not load spell: ${spellUuid}`);
+    return false;
+  }
+  const level = Number(src.system?.level ?? 0);
+  if (level > maxSpellLevel) return false;
+
+  const cls = await resolveShamanClassItemForSpells(actor, shamanClassItem);
+  if (!cls) {
+    ui.notifications.warn("Could not resolve Shaman class for ritual spell metadata.");
+    return false;
+  }
+
+  const data = src.toObject();
+  data.name = `${src.name} [${bracketLabel}]`;
+  applyCommunicationRitualSpellMetadata(data, cls);
+  foundry.utils.setProperty(data, `flags.${MODULE_ID}.attunementMoodSpell`, true);
+  if (limitedUse) applySpellLimitedUsesForPeriod(data, 1);
+
+  await actor.createEmbeddedDocuments("Item", [data]);
+  return true;
+}
+
+/**
+ * @param {string} uuid
+ * @returns {Promise<string>}
+ */
+async function displayNameForSpellUuid(uuid) {
+  const doc = await fetchSpellItem(uuid);
+  return doc?.name ? String(doc.name) : uuid;
 }
 
 /**
@@ -513,16 +1089,14 @@ async function postCommunicationRitualSummaryToChat(app, spiritSpellsGranted) {
     lines.push(`<p><strong>Spirits communed:</strong> ${rolled.map(esc).join(", ")}</p>`);
   }
 
-  if (app.doAttunement && app._attunementMoodId) {
-    const mood = ATTUNEMENT_MOOD_BY_ID[app._attunementMoodId];
-    const moodLabel = mood?.label ?? app._attunementMoodId;
-    if (mood?.spell) {
-      lines.push(
-        `<p><strong>Attunement:</strong> ${esc(moodLabel)}. <strong>Mood spell:</strong> ${esc(mood.spell)}.</p>`
-      );
+  if (app.doAttunement && (app._attunementDisplayLabel || app._attunementMoodId)) {
+    const moodLabel = app._attunementDisplayLabel || ATTUNEMENT_MOOD_BY_ID[app._attunementMoodId]?.label || app._attunementMoodId;
+    const spellLine = app._attunementSpellSummary?.trim();
+    if (spellLine) {
+      lines.push(`<p><strong>Attunement:</strong> ${esc(moodLabel)}. <strong>Mood spell:</strong> ${esc(spellLine)}.</p>`);
     } else {
       lines.push(
-        `<p><strong>Attunement:</strong> ${esc(moodLabel)}. <strong>Mood spell:</strong> none set (wild mood).</p>`
+        `<p><strong>Attunement:</strong> ${esc(moodLabel)}. <strong>Mood spell:</strong> none (wild or no linked spell).</p>`
       );
     }
   }
@@ -657,6 +1231,15 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
   /** @type {string|null} */
   _attunementMoodId = null;
 
+  /** @type {string} */
+  _attunementDisplayLabel = "";
+
+  /** @type {string} */
+  _attunementSpellSummary = "";
+
+  /** @type {Promise<{ uuid: string, table: RollTable|null, rows: AttunementDebugRow[] }>|null} */
+  _attunementCfgPromise = null;
+
   /** @type {string[]} */
   _activeSpiritIds = [];
 
@@ -717,6 +1300,9 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
     this._attuneHtml = "";
     this._attunementRollTotal = null;
     this._attunementMoodId = null;
+    this._attunementDisplayLabel = "";
+    this._attunementSpellSummary = "";
+    this._attunementCfgPromise = null;
     this._activeSpiritIds = [];
     this._debugManualTest = false;
     this._debugRollPicks = [];
@@ -759,6 +1345,18 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
 
   get doAttunement() {
     return this.options.doAttunement === true;
+  }
+
+  /**
+   * Cached attunement config: HTML table in the Attunement Ritual feature, else compendium RollTable, else legacy d4 list.
+   * @returns {Promise<{ source: AttunementConfigSource, uuid: string|null, table: RollTable|null, rows: AttunementDebugRow[], rollFormula: string }>}
+   */
+  _getAttunementTableConfig() {
+    if (!this._attunementCfgPromise) {
+      const actor = game.actors.get(this.actor.id) ?? this.actor;
+      this._attunementCfgPromise = resolveAttunementRollTable(actor);
+    }
+    return this._attunementCfgPromise;
   }
 
   _ensureDebugRollPicks() {
@@ -861,6 +1459,25 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
       }
     }
 
+    /** @type {{ resultId: string, rangeLabel: string, label: string }[]} */
+    let debugAttunementRows = ATTUNEMENT_MOODS.map((m) => ({
+      resultId: `legacy:${m.id}`,
+      rangeLabel: String(m.d4),
+      label: m.label
+    }));
+    let attuneRollFormula = "1d4";
+    if (this.doAttunement) {
+      const attCfg = await this._getAttunementTableConfig();
+      if (attCfg.rows?.length) {
+        debugAttunementRows = attCfg.rows.map((r) => ({
+          resultId: r.resultId,
+          rangeLabel: r.rangeLabel,
+          label: r.label
+        }));
+      }
+      attuneRollFormula = normalizeAttunementRollFormula(attCfg.rollFormula);
+    }
+
     return {
       title,
       subtitle,
@@ -886,7 +1503,8 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
       showDebugRollUi,
       showDebugAttuneUi,
       debugRollSlots,
-      debugAttuneMoods: ATTUNEMENT_MOODS.map((m) => ({ id: m.id, label: m.label, d4: m.d4 })),
+      debugAttunementRows,
+      attuneRollFormula,
       hideAttuneFooter: showDebugAttuneUi
     };
   }
@@ -1034,26 +1652,44 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
   /**
    * @param {ShamanRitualApplication} app
    * @param {Actor} actor
-   * @param {string} moodId
-   * @param {string} displayBlob
-   * @param {number|null} [diceTotal] Physical roll total if known; else mood d4 is stored.
+   * @param {string} displayBlob enriched source HTML for the panel
+   * @param {number|null} diceTotal
+   * @param {AttunementOutcome} outcome
    */
-  static async #applyAttunementOutcome(app, actor, moodId, displayBlob, diceTotal = null) {
-    const mood = ATTUNEMENT_MOOD_BY_ID[moodId];
-    if (!mood) return;
+  static async #applyAttunementOutcome(app, actor, displayBlob, diceTotal, outcome) {
+    const { bracketLabel, effectMoodId, preparedSpellUuid, onceSpellUuid } = outcome;
     app._attunementRollTotal =
-      typeof diceTotal === "number" && Number.isFinite(diceTotal) ? diceTotal : mood.d4;
-    app._attunementMoodId = moodId;
+      typeof diceTotal === "number" && Number.isFinite(diceTotal) ? diceTotal : null;
+    app._attunementMoodId = effectMoodId;
+    app._attunementDisplayLabel = bracketLabel;
+    app._attunementSpellSummary = "";
 
     const maxLv = getMaxLeveledSpellSlot(actor);
-    await swapAttunementToMood(actor, moodId);
+    await applyAttunementRitualEffectByBehaviourName(actor, bracketLabel);
     await deleteAttunementBracketSpells(actor);
-    if (mood.spell) {
-      const spellUuid = await phbSpellUuidByName(mood.spell);
-      if (spellUuid)
-        await grantPreparedSpell(actor, mood.spell, mood.label, spellUuid, maxLv, app.shamanClass);
-      else ui.notifications.warn(`Could not resolve PHB spell: ${mood.spell}`);
+
+    const spellBits = [];
+    if (onceSpellUuid) {
+      const ok = await grantAttunementMoodSpell(actor, {
+        spellUuid: onceSpellUuid,
+        bracketLabel,
+        maxSpellLevel: maxLv,
+        shamanClassItem: app.shamanClass,
+        limitedUse: true
+      });
+      if (ok) spellBits.push(`${await displayNameForSpellUuid(onceSpellUuid)} (1 use, long rest)`);
     }
+    if (preparedSpellUuid && preparedSpellUuid !== onceSpellUuid) {
+      const ok = await grantAttunementMoodSpell(actor, {
+        spellUuid: preparedSpellUuid,
+        bracketLabel,
+        maxSpellLevel: maxLv,
+        shamanClassItem: app.shamanClass,
+        limitedUse: false
+      });
+      if (ok) spellBits.push(await displayNameForSpellUuid(preparedSpellUuid));
+    }
+    app._attunementSpellSummary = spellBits.join("; ");
 
     const TE = foundry.applications.ux.TextEditor.implementation;
     try {
@@ -1068,37 +1704,121 @@ class ShamanRitualApplication extends HandlebarsApplicationMixin(ApplicationV2) 
   }
 
   static async #onPickDebugAttunement(_event, target) {
-    const moodId = target.dataset.moodId;
-    if (!moodId || !ATTUNEMENT_MOOD_BY_ID[moodId]) return;
+    const resultId = target.dataset.resultId;
+    if (!resultId) return;
     const app = /** @type {ShamanRitualApplication} */ (this);
     const actor = game.actors.get(app.actor.id) ?? app.actor;
-    const mood = ATTUNEMENT_MOOD_BY_ID[moodId];
-    const displayBlob = `<p><strong>${mood.label}</strong> (debug d${mood.d4})</p>`;
-    await ShamanRitualApplication.#applyAttunementOutcome(app, actor, moodId, displayBlob, mood.d4);
+    const cfg = await app._getAttunementTableConfig();
+    const row = cfg.rows.find((r) => r.resultId === resultId);
+    if (!row) return;
+
+    let outcome;
+    let displayBlob = row.text;
+    const diceTotal = row.debugRollTotal;
+
+    if (row.legacyMoodId) {
+      const mood = ATTUNEMENT_MOOD_BY_ID[row.legacyMoodId];
+      if (!mood) return;
+      const spellUuid = mood.spell ? await phbSpellUuidByName(mood.spell) : null;
+      outcome = {
+        bracketLabel: mood.label,
+        effectMoodId: row.legacyMoodId,
+        preparedSpellUuid: spellUuid,
+        onceSpellUuid: null
+      };
+      displayBlob = `<p><strong>${mood.label}</strong> (debug ${row.rangeLabel})</p>`;
+    } else if (cfg.source === "html") {
+      outcome = parseAttunementOutcomeFromHtmlRow(row.label, row.text, diceTotal);
+      displayBlob = `<p><strong>${foundry.utils.escapeHTML(row.label)}</strong></p>${row.text}`;
+    } else {
+      outcome = parseAttunementOutcomeFromResultText(row.text, diceTotal, cfg.table);
+      displayBlob = row.text;
+    }
+
+    await ShamanRitualApplication.#applyAttunementOutcome(app, actor, displayBlob, diceTotal, outcome);
   }
 
   static async #onRollAttunement(_event, _target) {
     const app = /** @type {ShamanRitualApplication} */ (this);
     const actor = game.actors.get(app.actor.id) ?? app.actor;
-    const table = await fromUuid(ATTUNEMENT_TABLE_UUID);
-    if (!table || table.documentName !== "RollTable") {
-      ui.notifications.error("Attunement Ritual table not found.");
+    const cfg = await app._getAttunementTableConfig();
+
+    if (cfg.source === "rolltable" && cfg.table?.documentName === "RollTable") {
+      const draw = await cfg.table.draw({ displayChat: true, rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
+      const first = Array.from(draw.results ?? [])[0];
+      const blob = String(first?.text ?? first?.name ?? "").trim();
+      const rt = draw.roll?.total;
+      const rollTotal = typeof rt === "number" && Number.isFinite(rt) ? rt : null;
+
+      if (!blob) {
+        ui.notifications.error("Attunement table result was empty.");
+        app.render();
+        return;
+      }
+
+      const outcome = parseAttunementOutcomeFromResultText(blob, rollTotal, cfg.table);
+      await ShamanRitualApplication.#applyAttunementOutcome(app, actor, blob, rollTotal, outcome);
       return;
     }
-    const draw = await table.draw({ displayChat: true, rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
-    const texts = Array.from(draw.results ?? []).map((r) => r.text ?? r.name ?? "");
-    const blob = texts.join(" ").trim();
-    const rt = draw.roll?.total;
-    const rollTotal = typeof rt === "number" && Number.isFinite(rt) ? rt : null;
 
-    const moodId = parseAttunementMood(blob, rollTotal);
-    if (!moodId) {
-      ui.notifications.error("Could not determine attunement mood from the table result.");
-      app.render();
+    if (cfg.source === "html" || cfg.source === "legacy") {
+      const rollData = actor.getRollData?.() ?? {};
+      let roll;
+      try {
+        roll = await evaluateAttunementDiceRoll(cfg.rollFormula, rollData);
+      } catch (err) {
+        console.error(`${MODULE_ID} | attunement roll`, err);
+        ui.notifications.error("Attunement roll failed.");
+        return;
+      }
+      const rollTotal = roll.total;
+      if (!Number.isFinite(rollTotal) || rollTotal < 1) {
+        ui.notifications.error(
+          "Attunement roll did not produce a valid total (try again). If this persists, check Foundry / system versions."
+        );
+        app.render();
+        return;
+      }
+      if (typeof roll.toMessage === "function") {
+        try {
+          await roll.toMessage({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            rollMode: CONST.DICE_ROLL_MODES.PUBLIC
+          });
+        } catch (err) {
+          console.error(`${MODULE_ID} | attunement roll toMessage`, err);
+        }
+      }
+
+      const row = findAttunementRowForDiceTotal(cfg.rows, rollTotal);
+      if (!row) {
+        ui.notifications.error(`No attunement row on your feature matches ${rollTotal}.`);
+        app.render();
+        return;
+      }
+
+      if (row.legacyMoodId) {
+        const mood = ATTUNEMENT_MOOD_BY_ID[row.legacyMoodId];
+        if (!mood) return;
+        const spellUuid = mood.spell ? await phbSpellUuidByName(mood.spell) : null;
+        const outcome = {
+          bracketLabel: mood.label,
+          effectMoodId: row.legacyMoodId,
+          preparedSpellUuid: spellUuid,
+          onceSpellUuid: null
+        };
+        const displayBlob = `<p><strong>${mood.label}</strong></p>`;
+        await ShamanRitualApplication.#applyAttunementOutcome(app, actor, displayBlob, rollTotal, outcome);
+        return;
+      }
+
+      const outcome = parseAttunementOutcomeFromHtmlRow(row.label, row.text, rollTotal);
+      const displayBlob = `<p><strong>${foundry.utils.escapeHTML(row.label)}</strong></p>${row.text}`;
+      await ShamanRitualApplication.#applyAttunementOutcome(app, actor, displayBlob, rollTotal, outcome);
       return;
     }
 
-    await ShamanRitualApplication.#applyAttunementOutcome(app, actor, moodId, blob, rollTotal);
+    ui.notifications.error("Attunement Ritual could not be resolved (no table in the feature and default roll table missing).");
   }
 
   static async #onFinishRitual(_event, _target) {
@@ -1142,13 +1862,21 @@ async function runCommunicationRitual(actor, shamanClass) {
   if (!live.isOwner) return;
 
   await deletePriorRitualSpells(live);
-  await removeAllShamanAttunementEffects(live);
+  await removeAllAttunementRitualEffects(live);
+  await disableAllAttunementFeatureEmbeddedEffects(live);
 
   const scales = shamanClass.scaleValues ?? {};
+  // ScaleValue identifiers match @scale.shaman.* (class slug prefix in dnd5e).
   const guaranteed = numericFromScaleEntry(
-    scales["guaranteed-active-spirits"] ?? scales["guaranteedactivespirits"]
+    scales["shaman.guaranteed-active-spirits"] ??
+      scales["guaranteed-active-spirits"] ??
+      scales["guaranteedactivespirits"]
   );
-  const rollCount = numericFromScaleEntry(scales["active-spirit-rolls"] ?? scales["activespiritrolls"]);
+  const rollCount = numericFromScaleEntry(
+    scales["shaman.active-spirit-rolls"] ??
+      scales["active-spirit-rolls"] ??
+      scales["activespiritrolls"]
+  );
   const shamanLevel = Number(shamanClass.system?.levels ?? 0);
   const doAttunement = shamanLevel >= 9;
 

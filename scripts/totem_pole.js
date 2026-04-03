@@ -34,6 +34,8 @@ const SCALE_REF_REGEX = /@scale\.([a-z0-9-]+)\.([a-z0-9-]+)/gi;
 const _totemCleanupScheduled = new Set();
 
 const TOTEM_MAGIC_REGION_COLOR = "#495a3f";
+/** Ethereal Convergence: second totem’s region (warm orange, distinct from A’s olive). */
+const TOTEM_MAGIC_REGION_COLOR_B = "#c4682a";
 
 /** Infusion auras applied via Totem Magic region (`applyActiveEffect`). Match exact name, word-boundary substring, or `flags[MODULE_ID].totemInfusionAura`. */
 const TOTEM_INFUSION_AURA_NAMES = /** @type {const} */ (["Blood", "Elements", "Purity", "Thorns", "Swiftness"]);
@@ -2272,7 +2274,8 @@ class TotemBuilderApplication extends HandlebarsApplicationMixin(ApplicationV2) 
                 if (placedToken2) {
                   await createTotemMagicRegionForToken(
                     placedToken2,
-                    computeTotemMagicRadiusFeet(meta1)
+                    computeTotemMagicRadiusFeet(meta1),
+                    TOTEM_MAGIC_REGION_COLOR_B
                   );
                 }
               }
@@ -2591,8 +2594,9 @@ async function embedTotemMagicAuraBehaviors(region, totemActor) {
  * Create a circle region on / following the placed totem token (Foundry v14+), not an emanation.
  * @param {TokenDocument} token
  * @param {number} radiusFeet
+ * @param {string} [regionColor] hex fill color (default: {@link TOTEM_MAGIC_REGION_COLOR})
  */
-async function createTotemMagicRegionForToken(token, radiusFeet) {
+async function createTotemMagicRegionForToken(token, radiusFeet, regionColor = TOTEM_MAGIC_REGION_COLOR) {
   const tokenDoc = resolveTotemPlacedTokenDocument(token);
   if (!(tokenDoc instanceof TokenDocument) || !canvas?.ready) return;
   token = tokenDoc;
@@ -2610,7 +2614,7 @@ async function createTotemMagicRegionForToken(token, radiusFeet) {
   /** @type {Record<string, unknown>} */
   const baseRegion = {
     name: "Totem Magic",
-    color: TOTEM_MAGIC_REGION_COLOR,
+    color: regionColor,
     displayMeasurements: false,
     restriction: { enabled: false, type: "move", priority: 0 },
     behaviors: [],
