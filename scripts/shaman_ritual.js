@@ -312,6 +312,29 @@ async function deleteAttunementBracketSpells(actor) {
 }
 
 /**
+ * Normalize effect names for comparison (braille padding, spacing).
+ * @param {string} name
+ * @returns {string}
+ */
+function attunementEffectNameKey(name) {
+  return String(name ?? "")
+    .replace(/\u2800/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * @param {Item} feature
+ * @param {string} behaviourName
+ * @returns {ActiveEffect|undefined}
+ */
+function findAttunementFeatureEffectByBehaviourName(feature, behaviourName) {
+  const key = attunementEffectNameKey(behaviourName);
+  return [...(feature.effects ?? [])].find((e) => attunementEffectNameKey(e.name) === key);
+}
+
+/**
  * New ActiveEffect embedded on the Attunement Ritual item (editable, reused next rest). Starts disabled until attunement resolves.
  * @param {Item} feature
  * @param {Actor} actor
@@ -352,7 +375,23 @@ function attunementFeatureFromActor(actor) {
 }
 
 /**
- * Clear prior attunement ritual effects on the actor; ensure the chosen behaviour exists on the Attunement Ritual feature (create placeholder on the feature if missing); enable only that effect on the feature, others disabled; copy it onto the actor as the active attunement.
+ * Remove duplicate embedded effects on the feat that share the same normalized name (keep the first).
+ * @param {Item} feature
+ * @param {string} behaviourName
+ * @returns {Promise<Item|null>}
+ */
+async function dedupeAttunementFeatureEffectsNamed(feature, behaviourName) {
+  const key = attunementEffectNameKey(behaviourName);
+  const same = [...(feature.effects ?? [])].filter((e) => attunementEffectNameKey(e.name) === key);
+  if (same.length <= 1) return feature;
+  const removeIds = same.slice(1).map((e) => e.id);
+  await feature.deleteEmbeddedDocuments("ActiveEffect", removeIds);
+  const actor = feature.parent;
+  return actor?.items?.get(feature.id) ?? feature;
+}
+
+/**
+ * Strip prior module-cloned attunement effects from the actor (legacy); only toggle embedded effects on the Attunement Ritual feature — dnd5e applies those to the sheet once.
  * @param {Actor} actor
  * @param {string} behaviourEffectName e.g. Peaceful, Melinara's Dominance (from table / outcome)
  * @returns {Promise<void>}
@@ -369,8 +408,10 @@ async function applyAttunementRitualEffectByBehaviourName(actor, behaviourEffect
     return;
   }
 
-  const wantLower = want.toLowerCase();
-  let match = [...(feature.effects ?? [])].find((e) => String(e.name ?? "").trim().toLowerCase() === wantLower);
+  feature = (await dedupeAttunementFeatureEffectsNamed(feature, want)) ?? feature;
+  feature = attunementFeatureFromActor(actor) ?? feature;
+
+  let match = findAttunementFeatureEffectByBehaviourName(feature, want);
 
   if (!match) {
     await feature.createEmbeddedDocuments("ActiveEffect", [
@@ -378,7 +419,7 @@ async function applyAttunementRitualEffectByBehaviourName(actor, behaviourEffect
     ]);
     feature = attunementFeatureFromActor(actor);
     if (!feature) return;
-    match = [...(feature.effects ?? [])].find((e) => String(e.name ?? "").trim().toLowerCase() === wantLower);
+    match = findAttunementFeatureEffectByBehaviourName(feature, want);
   }
 
   if (!match) {
@@ -391,17 +432,6 @@ async function applyAttunementRitualEffectByBehaviourName(actor, behaviourEffect
     disabled: e.id !== match.id
   }));
   if (disableUpdates.length) await feature.updateEmbeddedDocuments("ActiveEffect", disableUpdates);
-
-  feature = attunementFeatureFromActor(actor);
-  const liveMatch = feature ? [...feature.effects].find((e) => e.id === match.id) : null;
-  if (!feature || !liveMatch) return;
-
-  const data = liveMatch.toObject();
-  delete data._id;
-  data.origin = feature.uuid;
-  data.disabled = false;
-  foundry.utils.setProperty(data, `flags.${MODULE_ID}`, { attunementEffect: true });
-  await actor.createEmbeddedDocuments("ActiveEffect", [data]);
 }
 
 /**
